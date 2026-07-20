@@ -1,5 +1,6 @@
 const BaseRepo = require('./BaseRepo');
 const RefreshToken = require('../Models/RefreshToken.Model');
+const crypto = require('crypto');
 
 class RefreshTokenRepository extends BaseRepo {
   constructor() {
@@ -7,12 +8,25 @@ class RefreshTokenRepository extends BaseRepo {
     this.allowedUpdates = []; // Refresh tokens should never be updated, only created/deleted
   }
 
+  _hashToken(token) {
+    return crypto.createHash('sha256').update(token).digest('hex');
+  }
+
+  async create(data, options = {}) {
+    if (data && data.token) {
+      data = { ...data, token: this._hashToken(data.token) };
+    }
+    return await super.create(data, options);
+  }
+
   async findByToken(token) {
-    return await this.findOne({ token });
+    const hashedToken = this._hashToken(token);
+    return await this.findOne({ token: hashedToken });
   }
 
   async deleteByToken(token) {
-    return await this.model.findOneAndDelete({ token });
+    const hashedToken = this._hashToken(token);
+    return await this.model.findOneAndDelete({ token: hashedToken });
   }
   
   async deleteByUser(userId) {

@@ -1,7 +1,12 @@
+const ApiError = require('../Utils/ApiError');
+
 const authorize = (...roles) => {
   return (req, res, next) => {
-    if (!req.user || !roles.includes(req.user.role)) {
-      return res.status(403).json({ message: 'Not authorized for this role' });
+    if (!req.user) {
+      return next(new ApiError(401, 'Authentication required'));
+    }
+    if (!roles.includes(req.user.role)) {
+      return next(new ApiError(403, `Role '${req.user.role}' is not permitted`));
     }
     next();
   };

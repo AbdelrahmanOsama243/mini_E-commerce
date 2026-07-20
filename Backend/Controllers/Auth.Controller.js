@@ -5,9 +5,12 @@ const register = async (req, res) => {
   try {
     const { name, email, password } = req.body;
 
-    if (!name || !email || !password) {
-      return res.status(400).json({ message: 'Missing fields' });
+    if (!name) return res.status(400).json({ message: 'Name is required' });
+    if (typeof name !== 'string' || name.trim().length < 2) {
+      return res.status(400).json({ message: 'Name must be at least 2 characters long' });
     }
+    if (!email) return res.status(400).json({ message: 'Email is required' });
+    if (!password) return res.status(400).json({ message: 'Password is required' });
 
     // Email validation
     const emailRegex = /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/;
@@ -51,9 +54,8 @@ const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    if (!email || !password) {
-      return res.status(400).json({ message: 'Missing fields' });
-    }
+    if (!email) return res.status(400).json({ message: 'Email is required' });
+    if (!password) return res.status(400).json({ message: 'Password is required' });
 
     // Email validation
     const emailRegex = /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/;
@@ -89,6 +91,10 @@ const logout = async (req, res) => {
     // If you pass the refreshToken in body:
     const { refreshToken } = req.body;
     
+    if (!refreshToken && !req.user) {
+      return res.status(400).json({ message: 'Refresh token or user session is required to logout' });
+    }
+
     if (refreshToken) {
       await jwtServices.revokeRefreshToken(refreshToken);
     } else if (req.user) {
@@ -102,9 +108,27 @@ const logout = async (req, res) => {
   }
 };
 
+const getMe = async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ message: 'User not authenticated or not found' });
+    }
+
+    const { _id, name, email, role } = req.user;
+    
+    if (!_id || !name || !email) {
+      return res.status(400).json({ message: 'User data is incomplete or invalid' });
+    }
+
+    res.status(200).json({ _id, name, email, role });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
 
 module.exports = {
   register,
   login,
   logout,
+  getMe,
 };

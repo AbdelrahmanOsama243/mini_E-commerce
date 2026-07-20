@@ -7,17 +7,9 @@ class OrdersRepository extends BaseRepo {
     this.allowedUpdates = ['status', 'shippingAddress'];
   }
 
-  async createOrder(orderData) {
-    return await this.create(orderData);
-  }
-
-  async getOrders(filter = {}) {
-    return await this.model.find(filter).populate('items.productId');
-  }
-
-  async getOrderById(id) {
-    return await this.model.findById(id).populate('items.productId');
-  }
+  // Shadow methods (createOrder, getOrders, getOrderById) have been removed.
+  // Callers should use the generic methods from BaseRepo:
+  // this.create(), this.findAll(filter, { populate: 'items.productId' }), this.findById(id, { populate: 'items.productId' })
 }
 
 module.exports = new OrdersRepository();

@@ -1,150 +1,94 @@
 const jwt = require("jsonwebtoken");
 const RefreshTokenRepo = require("../Repos/RefreshToken.Repo");
+const ApiError = require("./ApiError");
 
-// ─── Centralized Config ──────────────────────────────────────────
-const CONFIG = {
-  accessSecret: () => process.env.JWT_SECRET,
-  refreshSecret: () => process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET,
-  accessExpiry: "1h",
-  refreshExpiry: "30d",
-};
+const ACCESS_SECRET = process.env.JWT_SECRET;
+const REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET;
+const ISSUER = "mini_e-commerce";
+
+if (!ACCESS_SECRET) {
+  throw new Error("FATAL: JWT_SECRET not set in environment variables");
+}
 
 class JWTServices {
-  // ─── Core Token Generation ───────────────────────────────────────
-  generateAccessToken(payload, secret) {
-    return jwt.sign(payload, secret, { expiresIn: CONFIG.accessExpiry });
+  _sign(payload, secret, expiry) {
+    return jwt.sign(payload, secret, {
+      expiresIn: expiry,
+      algorithm: "HS256",
+      issuer: ISSUER,
+      audience: "mini_e-commerce_clients",
+    });
   }
 
-  generateRefreshToken(payload, secret) {
-    return jwt.sign(payload, secret, { expiresIn: CONFIG.refreshExpiry });
+  generateAccessToken(payload) {
+    return this._sign({ ...payload, typ: "access" }, ACCESS_SECRET, "1h");
+  }
+
+  generateRefreshToken(payload) {
+    return this._sign({ ...payload, typ: "refresh" }, REFRESH_SECRET, "30d");
   }
 
   extractToken(authHeader) {
     if (!authHeader) return null;
     const parts = authHeader.split(" ");
-    return parts.length === 2 ? parts[1] : null;
+    return parts.length === 2 && parts[0] === "Bearer" ? parts[1] : null;
   }
 
   verifyAccessToken(token) {
-    return jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, ACCESS_SECRET, { clockTolerance: 30, issuer: ISSUER });
+    if (decoded.typ !== "access") throw new jwt.JsonWebTokenError("Invalid token type");
+    return decoded;
   }
 
   verifyRefreshToken(token) {
-    return jwt.verify(
-      token,
-      process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET,
-    );
-  }
-
-  isTokenValid(token) {
-    try {
-      this.verifyAccessToken(token);
-      return true;
-    } catch {
-      return false;
-    }
-  }
-
-  decodeToken(token) {
-    return jwt.decode(token);
+    const decoded = jwt.verify(token, REFRESH_SECRET, { clockTolerance: 30, issuer: ISSUER });
+    if (decoded.typ !== "refresh") throw new jwt.JsonWebTokenError("Invalid token type");
+    return decoded;
   }
 
   async generateTokenPair(userId) {
-    const accessToken = this.generateAccessToken(
-      { id: userId },
-      process.env.JWT_SECRET,
-      CONFIG.accessExpiry,
-    );
-    const refreshToken = this.generateRefreshToken(
-      { id: userId },
-      process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET,
-      CONFIG.refreshExpiry,
-    );
+    const accessToken = this.generateAccessToken({ id: userId });
+    const refreshToken = this.generateRefreshToken({ id: userId });
 
     const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 30); // 7 days
+    expiresAt.setDate(expiresAt.getDate() + 30); // 30 days matches "30d"
 
     // Persist the refresh token in the database
     const refreshTokenDoc = await RefreshTokenRepo.create({
       user: userId,
       token: refreshToken,
-      expiresAt: expiresAt
+      expiresAt: expiresAt,
     });
 
     return { accessToken, refreshToken, refreshTokenDoc };
   }
 
-  // ─── New Access Token from Refresh Token ─────────────────────────
-  generateNewAccessToken(payload) {
-    return this.generateAccessToken(payload, process.env.JWT_SECRET, "15m");
-  }
-
-  // ─── Refresh: rotate refresh token + issue new access token ──────
   async refreshTokens(oldRefreshToken) {
-    // 1. Verify the old refresh token
     const decoded = this.verifyRefreshToken(oldRefreshToken);
 
-    // 2. Check it exists in the DB (not revoked)
-    const existingDoc = await RefreshTokenRepo.findByToken(oldRefreshToken);
+    // Atomic delete returning the doc
+    const existingDoc = await RefreshTokenRepo.deleteByToken(oldRefreshToken);
     if (!existingDoc) {
-      const error = new Error("Refresh token not found or already revoked");
-      error.status = 401;
-      throw error;
+      throw new ApiError(401, "Refresh token not found or already revoked");
     }
 
-    // 3. Delete the old refresh token (rotation)
-    await RefreshTokenRepo.delete(existingDoc._id);
+    if (new Date() > new Date(existingDoc.expiresAt)) {
+      throw new ApiError(401, "Refresh token expired in database");
+    }
 
-    // 4. Issue a new token pair
     const { accessToken, refreshToken, refreshTokenDoc } =
       await this.generateTokenPair(decoded.id);
 
     return { accessToken, refreshToken, refreshTokenDoc, userId: decoded.id };
   }
 
-  // ─── Silent Refresh: use stored refresh token to renew both ────
-  async silentRefresh(userId) {
-    // 1. Get the user's refresh tokens from DB
-    const storedTokens = await RefreshTokenRepo.findAll({ user: userId });
-    if (!storedTokens || storedTokens.length === 0) {
-      return false;
-    }
-
-    // 2. Try the most recent refresh token
-    const latestDoc = storedTokens[storedTokens.length - 1];
-
-    // 3. Verify the refresh token is still valid (not expired)
-    try {
-      this.verifyRefreshToken(latestDoc.token);
-    } catch {
-      // Refresh token is expired — clean it up and return false
-      await RefreshTokenRepo.delete(latestDoc._id);
-      return false;
-    }
-
-    // 4. Rotate: delete the old refresh token
-    await RefreshTokenRepo.delete(latestDoc._id);
-
-    // 5. Generate a fresh token pair (new access + new refresh)
-    const { accessToken, refreshToken, refreshTokenDoc } =
-      await this.generateTokenPair(userId);
-
-    return { accessToken, refreshToken, refreshTokenDoc };
-  }
-
-  // ─── Logout: revoke a single refresh token ──────────────────────
   async revokeRefreshToken(token) {
-    const doc = await RefreshTokenRepo.findByToken(token);
-    if (doc) {
-      await RefreshTokenRepo.delete(doc._id);
-    }
+    await RefreshTokenRepo.deleteByToken(token);
   }
 
-  // ─── Logout from all devices: revoke all refresh tokens for user ─
   async revokeAllRefreshTokens(userId) {
     await RefreshTokenRepo.deleteByUser(userId);
   }
 }
 
 module.exports = new JWTServices();
-

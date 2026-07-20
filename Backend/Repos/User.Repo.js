@@ -10,19 +10,19 @@ class UserRepository extends BaseRepo {
 
   async registerUser(userData) {
     const hashedPassword = await bcrypt.hash(userData.password, 12);
-    userData.password = hashedPassword;
-    return await this.create(userData);
+    return await this.create({ ...userData, password: hashedPassword });
   }
 
   async comparePassword(plainText, hashedPassword) {
     return await bcrypt.compare(plainText, hashedPassword);
   }
+  
   async findUserByEmail(email) {
     return await this.findOne({ email });
   }
 
   async findUserById(id) {
-    return await this.model.findById(id).select("-password");
+    return await this.findById(id, { select: "-password" });
   }
 }
 

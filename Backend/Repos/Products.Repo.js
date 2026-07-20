@@ -9,6 +9,7 @@ class ProductsRepository extends BaseRepo {
 
   async getProducts(query = {}) {
     const { search, category, page = 1, limit = 10 } = query;
+    const safeLimit = Math.min(Number(limit) || 10, 100);
     
     const filter = {};
     if (search) {
@@ -18,28 +19,7 @@ class ProductsRepository extends BaseRepo {
       filter.category = category;
     }
 
-    const skip = (page - 1) * limit;
-    
-    const products = await this.model.find(filter).skip(skip).limit(Number(limit));
-    const total = await this.model.countDocuments(filter);
-    
-    return { products, total };
-  }
-
-  async getProductById(id) {
-    return await this.findById(id);
-  }
-
-  async createProduct(productData) {
-    return await this.create(productData);
-  }
-
-  async updateProduct(id, updateData) {
-    return await this.update(id, updateData);
-  }
-
-  async deleteProduct(id) {
-    return await this.delete(id);
+    return await this.findAll(filter, { page: Number(page) || 1, limit: safeLimit });
   }
 }
 

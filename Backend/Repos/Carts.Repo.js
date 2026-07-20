@@ -8,7 +8,7 @@ class CartsRepository extends BaseRepo {
   }
 
   async getCartByUserId(userId) {
-    return await this.model.findOne({ userId }).populate('items.productId');
+    return await this.findOne({ userId }, { populate: 'items.productId' });
   }
 
   async getCartDocumentByUserId(userId) {
@@ -16,23 +16,19 @@ class CartsRepository extends BaseRepo {
   }
 
   async createCart(userId) {
-    const cart = await this.findOne({ userId });
-    if (cart) {
-      return cart;
+    try {
+      return await this.create({ userId, items: [] });
+    } catch (error) {
+      if (error.code === 11000) {
+        return await this.findOne({ userId });
+      }
+      throw error;
     }
-    return await this.create({ userId, items: [] });
   }
 
   async updateCart(cartId, items) {
-    return await this.model.findByIdAndUpdate(
-      cartId,
-      { items },
-      { new: true, runValidators: true }
-    ).populate('items.productId');
-  }
-
-  async saveCart(cart) {
-    return await cart.save();
+    const updated = await this.update(cartId, { items });
+    return await this.model.populate(updated, { path: 'items.productId' });
   }
 }
 
