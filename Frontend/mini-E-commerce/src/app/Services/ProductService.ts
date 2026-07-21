@@ -1,159 +1,97 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import {
+  Product,
+  ProductsResponse,
+  SingleProductResponse,
+  DeleteProductResponse,
+  ProductQueryParams,
+  CreateProductPayload,
+  UpdateProductPayload
+} from './Product/models/product.model';
+import { ProductApiService } from './Product/services/product-api.service';
+import { ProductInventoryService } from './Product/services/product-inventory.service';
+import { ProductCartIntegrationService } from './Product/services/product-cart-integration.service';
+import { ProductOrderIntegrationService } from './Product/services/product-order-integration.service';
+import { StockCheckResult, CartResponse, AddToCartPayload } from './Product/models/product-cart-relation.model';
+import { CreateOrderPayload, OrderResponse, OrderListResponse } from './Product/models/product-order-relation.model';
 
-// ─── Interfaces (mirrors Products.Model.js) ──────────────────────────────────
-
-export interface Product {
-  _id: string;
-  name: string;
-  description?: string;
-  price: number;
-  category: string;
-  stock: number;
-  image?: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-/** Shape returned by getProducts (paginated list from BaseRepo.findAll) */
-export interface ProductsResponse {
-  success: boolean;
-  data: Product[];
-  pagination: {
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
-  };
-}
-
-/** Shape returned by getProductById / createProduct / updateProduct */
-export interface SingleProductResponse {
-  success: boolean;
-  message?: string;
-  data: Product;
-}
-
-/** Shape returned by deleteProduct */
-export interface DeleteProductResponse {
-  success: boolean;
-  message: string;
-}
-
-// ─── Query params for getProducts ────────────────────────────────────────────
-
-export interface ProductQueryParams {
-  search?: string;
-  category?: string;
-  page?: number;
-  limit?: number;
-}
-
-// ─── Payload for createProduct ───────────────────────────────────────────────
-
-export interface CreateProductPayload {
-  name: string;
-  description?: string;
-  price: number;
-  category: string;
-  stock: number;
-  image?: string;
-}
-
-// ─── Payload for updateProduct (all fields optional) ─────────────────────────
-
-export type UpdateProductPayload = Partial<CreateProductPayload>;
-
-// ─────────────────────────────────────────────────────────────────────────────
+// Re-export all sub-modules for backwards compatibility
+export * from './Product';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ProductService {
 
-  /** Base URL — update to match your backend PORT from .env */
-  private readonly apiUrl = 'http://localhost:3000/api/products';
+  constructor(
+    private productApiService: ProductApiService,
+    private inventoryService: ProductInventoryService,
+    private cartIntegrationService: ProductCartIntegrationService,
+    private orderIntegrationService: ProductOrderIntegrationService
+  ) {}
 
-  constructor(private http: HttpClient) {}
+  // ─── Product API Facade Methods ─────────────────────────────────────────────
 
-  // ── Helpers ────────────────────────────────────────────────────────────────
-
-  /**
-   * Builds the Authorization header required by auth.middleware.js.
-   * Reads the JWT stored in localStorage under the key 'token'.
-   */
-  private getAuthHeaders(): HttpHeaders {
-    const token = localStorage.getItem('token') ?? '';
-    return new HttpHeaders({
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`
-    });
-  }
-
-  // ── Public API (mirrors product.controller.js) ─────────────────────────────
-
-  /**
-   * GET /api/products
-   * Public — no auth required.
-   * Supports: search, category, page, limit query params.
-   * Backend validates: page ≥ 1, limit clamped to [1, 100].
-   */
   getProducts(params: ProductQueryParams = {}): Observable<ProductsResponse> {
-    let httpParams = new HttpParams();
-
-    if (params.search)   httpParams = httpParams.set('search',   params.search);
-    if (params.category) httpParams = httpParams.set('category', params.category);
-    if (params.page)     httpParams = httpParams.set('page',     params.page.toString());
-    if (params.limit)    httpParams = httpParams.set('limit',    params.limit.toString());
-
-    return this.http.get<ProductsResponse>(this.apiUrl, { params: httpParams });
+    return this.productApiService.getProducts(params);
   }
 
-  /**
-   * GET /api/products/:id
-   * Public — no auth required.
-   * Backend uses validateObjectId middleware to reject malformed IDs.
-   */
   getProductById(id: string): Observable<SingleProductResponse> {
-    return this.http.get<SingleProductResponse>(`${this.apiUrl}/${id}`);
+    return this.productApiService.getProductById(id);
   }
 
-  /**
-   * POST /api/products
-   * Protected — requires valid JWT (authentication) + admin role (authorize).
-   * Required fields: name, category, price, stock.
-   * price and stock must be ≥ 0.
-   */
   createProduct(payload: CreateProductPayload): Observable<SingleProductResponse> {
-    return this.http.post<SingleProductResponse>(
-      this.apiUrl,
-      payload,
-      { headers: this.getAuthHeaders() }
-    );
+    return this.productApiService.createProduct(payload);
   }
 
-  /**
-   * PUT /api/products/:id
-   * Protected — requires valid JWT (authentication) + admin role (authorize).
-   * All fields optional; price and stock must be ≥ 0 if provided.
-   */
   updateProduct(id: string, payload: UpdateProductPayload): Observable<SingleProductResponse> {
-    return this.http.put<SingleProductResponse>(
-      `${this.apiUrl}/${id}`,
-      payload,
-      { headers: this.getAuthHeaders() }
-    );
+    return this.productApiService.updateProduct(id, payload);
   }
 
-  /**
-   * DELETE /api/products/:id
-   * Protected — requires valid JWT (authentication) + admin role (authorize).
-   */
   deleteProduct(id: string): Observable<DeleteProductResponse> {
-    return this.http.delete<DeleteProductResponse>(
-      `${this.apiUrl}/${id}`,
-      { headers: this.getAuthHeaders() }
-    );
+    return this.productApiService.deleteProduct(id);
+  }
+
+  // ─── Inventory Sub-service Facade Methods ────────────────────────────────────
+
+  checkStock(productId: string, requestedQuantity: number): Observable<StockCheckResult> {
+    return this.inventoryService.checkStock(productId, requestedQuantity);
+  }
+
+  isInStock(product: Product, quantityNeeded: number = 1): boolean {
+    return this.inventoryService.isInStock(product, quantityNeeded);
+  }
+
+  // ─── Cart Integration Sub-service Facade Methods ─────────────────────────────
+
+  getCart(): Observable<CartResponse> {
+    return this.cartIntegrationService.getCart();
+  }
+
+  addProductToCart(payload: AddToCartPayload): Observable<CartResponse> {
+    return this.cartIntegrationService.addProductToCart(payload);
+  }
+
+  updateCartItem(productId: string, quantity: number): Observable<CartResponse> {
+    return this.cartIntegrationService.updateCartItem(productId, quantity);
+  }
+
+  removeProductFromCart(productId: string): Observable<CartResponse> {
+    return this.cartIntegrationService.removeProductFromCart(productId);
+  }
+
+  // ─── Order Integration Sub-service Facade Methods ────────────────────────────
+
+  createOrder(payload: CreateOrderPayload): Observable<OrderResponse> {
+    return this.orderIntegrationService.createOrder(payload);
+  }
+
+  getUserOrders(): Observable<OrderListResponse> {
+    return this.orderIntegrationService.getUserOrders();
+  }
+
+  getOrderById(id: string): Observable<OrderResponse> {
+    return this.orderIntegrationService.getOrderById(id);
   }
 }

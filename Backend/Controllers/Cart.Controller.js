@@ -1,62 +1,83 @@
-const mongoose = require('mongoose');
-const CartRepo = require('../Repositories/Cart.Repository');
-const Product = require('../Models/Product.Model');
+const CartRepo = require('../Repos/Carts.Repo');
+const ProductsRepo = require('../Repos/Products.Repo');
+const asyncHandler = require('../Utils/asyncHandler');
+const ApiError = require('../Utils/ApiError');
+const { sendSuccess } = require('../Utils/response');
 
-const getCart = async (req, res, next) => {
-  try {
-    const cart = await CartRepo.getCartByUserId(req.user.id);
+const getCart = asyncHandler(async (req, res) => {
+  const userId = req.user.id || req.user._id;
+  const cart = await CartRepo.getCartByUserId(userId);
+  return sendSuccess(res, cart, 'Cart retrieved successfully');
+});
 
-    if (!cart) {
-      return res.status(404).json({ message: 'Cart not found' });
-    }
+const addItemToCart = asyncHandler(async (req, res) => {
+  const { productId, quantity } = req.body;
+  const userId = req.user.id || req.user._id;
 
-    return res.status(200).json({ cart });
-  } catch (error) {
-    return next(error);
+  // 1. Validate product exists and check stock
+  const product = await ProductsRepo.findById(productId);
+  if (!product) {
+    throw new ApiError(404, `Product with ID '${productId}' not found`);
   }
-};
 
-const addItemToCart = async (req, res, next) => {
-  try {
-    const { productId, quantity } = req.body;
-    const userId = req.user.id;
+  // 2. Business rule: check stock against what's already in the cart
+  const existingCart = await CartRepo.getCartDocumentByUserId(userId);
+  const existingItem = existingCart?.items.find(
+    item => item.productId.toString() === productId.toString()
+  );
+  const combinedQuantity = existingItem ? existingItem.quantity + quantity : quantity;
 
-    // 1. Validate productId
-    if (!productId || !mongoose.Types.ObjectId.isValid(productId)) {
-      return res.status(400).json({ message: 'Valid Product ID is required' });
-    }
-
-    // 2. Validate quantity
-    if (!quantity || quantity <= 0) {
-      return res.status(400).json({ message: 'Quantity must be greater than 0' });
-    }
-
-    // 3. Validate product exists
-    const product = await Product.findById(productId);
-    if (!product) {
-      return res.status(404).json({ message: 'Product not found' });
-    }
-
-    // 4. Business rule: check stock against what's already in the cart
-    const existingCart = await CartRepo.getCartDocumentByUserId(userId);
-    const existingItem = existingCart?.items.find(
-      item => item.productId.toString() === productId.toString()
-    );
-    const combinedQuantity = existingItem ? existingItem.quantity + quantity : quantity;
-
-    if (combinedQuantity > product.stock) {
-      return res.status(400).json({
-        message: `Requested quantity exceeds available stock (${product.stock} left)`
-      });
-    }
-
-    // 5. Add item via repo
-    const cart = await CartRepo.addItemToCart(userId, productId, quantity);
-
-    return res.status(existingItem ? 200 : 201).json({ message: 'Item added to cart', cart });
-  } catch (error) {
-    return next(error);
+  if (combinedQuantity > product.stock) {
+    throw new ApiError(400, `Requested quantity (${combinedQuantity}) exceeds available product stock (${product.stock})`);
   }
-};
 
-module.exports = { getCart, addItemToCart };
+  // 3. Add item via repo
+  const cart = await CartRepo.addItemToCart(userId, productId, quantity);
+
+  return sendSuccess(
+    res,
+    cart,
+    existingItem ? 'Cart item quantity updated' : 'Item added to cart',
+    existingItem ? 200 : 201
+  );
+});
+
+const updateCartItem = asyncHandler(async (req, res) => {
+  const { productId } = req.params;
+  const { quantity } = req.body;
+  const userId = req.user.id || req.user._id;
+
+  const product = await ProductsRepo.findById(productId);
+  if (!product) {
+    throw new ApiError(404, `Product with ID '${productId}' not found`);
+  }
+
+  if (quantity > product.stock) {
+    throw new ApiError(400, `Requested quantity (${quantity}) exceeds available product stock (${product.stock})`);
+  }
+
+  const cart = await CartRepo.updateItemQuantity(userId, productId, quantity);
+  return sendSuccess(res, cart, 'Cart item updated successfully');
+});
+
+const removeItemFromCart = asyncHandler(async (req, res) => {
+  const { productId } = req.params;
+  const userId = req.user.id || req.user._id;
+
+  const cart = await CartRepo.removeItemFromCart(userId, productId);
+  return sendSuccess(res, cart, 'Item removed from cart successfully');
+});
+
+const clearCart = asyncHandler(async (req, res) => {
+  const userId = req.user.id || req.user._id;
+  const cart = await CartRepo.clearCart(userId);
+  return sendSuccess(res, cart, 'Cart cleared successfully');
+});
+
+module.exports = {
+  getCart,
+  addItemToCart,
+  updateCartItem,
+  removeItemFromCart,
+  clearCart
+};

@@ -7,9 +7,20 @@ class OrdersRepository extends BaseRepo {
     this.allowedUpdates = ['status', 'shippingAddress'];
   }
 
-  // Shadow methods (createOrder, getOrders, getOrderById) have been removed.
-  // Callers should use the generic methods from BaseRepo:
-  // this.create(), this.findAll(filter, { populate: 'items.productId' }), this.findById(id, { populate: 'items.productId' })
+  async getUserOrders(userId) {
+    return await this.findAll(
+      { userId },
+      { populate: 'items.productId', sort: { createdAt: -1 } }
+    );
+  }
+
+  async getOrderById(orderId) {
+    return await this.findById(orderId, { populate: 'items.productId' });
+  }
+
+  async createOrder(orderData, options = {}) {
+    return await this.create(orderData, options);
+  }
 }
 
 module.exports = new OrdersRepository();
