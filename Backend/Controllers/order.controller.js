@@ -1,148 +1,125 @@
-const Order = require("");
-const Cart = require("");
-const Product = require("");
+const OrdersRepository = require("../Repos/orders.Repo");
+const CartsRepository = require("../Repos/Carts.Repo");
+const ProductsRepository = require("../Repos/Products.Repo");
+const asyncHandler = require("../Utils/asyncHandler");
+const ApiError = require("../Utils/ApiError");
+const { sendSuccess } = require("../Utils/response");
+const { validateObjectId } = require("../Middlewares/validateObjectId");
 
-const createOrder = async (req, res, next) => {
-  try {
-    const { shippingAddress } = req.body;
-    if (!shippingAddress || shippingAddress.trim() === "") {
-      return res.status(400).json({ msg: "Shipping address is required" });
+const createOrder = asyncHandler(async (req, res, next) => {
+  const { shippingAddress } = req.body;
+  if (!shippingAddress || shippingAddress.trim() === "") {
+    return next(new ApiError(400, "Shipping address is required"));
+  }
+
+  const userId = req.user?.id;
+  if (!userId) {
+    return next(new ApiError(401, "Unauthorized"));
+  }
+
+  // Get cart
+  const cart = await CartsRepository.getCartByUserId(userId);
+  if (!cart || cart.items.length === 0) {
+    return next(new ApiError(400, "Cart is empty"));
+  }
+
+  // Validate stock
+  for (const item of cart.items) {
+    if (!item.productId) {
+      return next(new ApiError(404, "Product in cart not found"));
     }
-
-
-    const cart = await Cart.findOne({ user: req.user.id }).populate(
-      "items.product"
-    );
-
-    if (!cart || cart.items.length === 0) {
-      return res.status(400).json({ msg: "Cart is empty" });
+    if (item.quantity > item.productId.stock) {
+      return next(new ApiError(400, `Insufficient stock for ${item.productId.name}`));
     }
-    for (const item of cart.items) {
-      if (item.quantity > item.product.stock) {
-        return res.status(400).json({
-          msg: `Insufficient stock for ${item.product.name}`,
-        });
-      }
-    }
+  }
 
-
-
-    for (const item of cart.items) {
-      await Product.findByIdAndUpdate(item.product._id, {
-        $inc: {
-          stock: -item.quantity,
-        },
-      });
-    }
-
-  
-    const orderItems = cart.items.map((item) => ({
-      product: item.product._id,
-      quantity: item.quantity,
-      priceAtPurchase: item.product.price,
-    }));
-
-
-    const totalPrice = cart.items.reduce((total, item) => {
-      return total + item.quantity * item.product.price;
-    }, 0);
-
-  
-    const order = await Order.create({
-      user: req.user.id,
-      items: orderItems,
-      shippingAddress,
-      totalPrice,
-      status: "pending",
+  // Deduct stock
+  for (const item of cart.items) {
+    await ProductsRepository.update(item.productId._id, {
+      stock: item.productId.stock - item.quantity,
     });
-
-
-    cart.items = [];
-    await cart.save();
-
-    res.status(201).json(order);
-  } catch (err) {
-    next(err);
   }
-};
 
+  // Create order items array
+  const orderItems = cart.items.map((item) => ({
+    productId: item.productId._id,
+    quantity: item.quantity,
+    priceAtPurchase: item.productId.price,
+  }));
 
-const getOrders = async (req, res, next) => {
-  try {
-    let orders;
+  // Calculate total price
+  const totalPrice = cart.items.reduce((total, item) => {
+    return total + item.quantity * item.productId.price;
+  }, 0);
 
-    if (req.query.all === "true" && req.user.role === "admin") {
-      orders = await Order.find().populate("user items.product");
-    } else {
-      orders = await Order.find({
-        user: req.user.id,
-      }).populate("items.product");
-    }
+  // Create order
+  const order = await OrdersRepository.create({
+    userId,
+    items: orderItems,
+    shippingAddress,
+    totalPrice,
+    status: "pending",
+  });
 
-    res.status(200).json(orders);
-  } catch (err) {
-    next(err);
+  // Clear cart
+  await CartsRepository.updateCart(cart._id, []);
+
+  return sendSuccess(res, order, "Order created successfully", 201);
+});
+
+const getOrders = asyncHandler(async (req, res, next) => {
+  const userId = req.user?.id;
+  let orders;
+
+  if (req.query.all === "true" && req.user?.role === "admin") {
+    // Admin gets all orders
+    orders = await OrdersRepository.findAll({}, { populate: "userId items.productId" });
+  } else {
+    // User gets their own orders
+    orders = await OrdersRepository.findAll({ userId }, { populate: "items.productId" });
   }
-};
 
+  return sendSuccess(res, orders);
+});
 
-const getOrderById = async (req, res, next) => {
-  try {
-    const order = await Order.findById(req.params.id).populate(
-      "user items.product"
-    );
+const getOrderById = [
+  validateObjectId(['id'], 'params'),
+  asyncHandler(async (req, res, next) => {
+    const { id } = req.params;
+    const order = await OrdersRepository.findById(id, { populate: "userId items.productId" });
 
     if (!order) {
-      return res.status(404).json({ msg: "Order not found" });
+      return next(new ApiError(404, "Order not found"));
     }
 
-    if (
-      order.user._id.toString() !== req.user.id &&
-      req.user.role !== "admin"
-    ) {
-      return res.status(403).json({ msg: "Forbidden" });
+    if (order.userId._id.toString() !== req.user?.id && req.user?.role !== "admin") {
+      return next(new ApiError(403, "Forbidden"));
     }
 
-    res.status(200).json(order);
-  } catch (err) {
-    next(err);
-  }
-};
+    return sendSuccess(res, order);
+  })
+];
 
-
-const updateOrderStatus = async (req, res, next) => {
-  try {
+const updateOrderStatus = [
+  validateObjectId(['id'], 'params'),
+  asyncHandler(async (req, res, next) => {
     const { status } = req.body;
 
-    const validStatus = [
-      "pending",
-      "paid",
-      "shipped",
-      "delivered",
-    ];
+    const validStatus = ["pending", "processing", "shipped", "delivered"];
 
     if (!validStatus.includes(status)) {
-      return res.status(400).json({
-        msg: "Invalid status",
-      });
+      return next(new ApiError(400, "Invalid status"));
     }
 
-    const order = await Order.findByIdAndUpdate(
-      req.params.id,
-      { status },
-      { new: true }
-    );
+    const { id } = req.params;
+    const order = await OrdersRepository.update(id, { status });
 
     if (!order) {
-      return res.status(404).json({
-        msg: "Order not found",
-      });
+      return next(new ApiError(404, "Order not found"));
     }
 
-    res.status(200).json(order);
-  } catch (err) {
-    next(err);
-  }
-};
+    return sendSuccess(res, order, "Order status updated successfully");
+  })
+];
 
-module.exports = {createOrder, getOrders, getOrderById, updateOrderStatus,};
+module.exports = { createOrder, getOrders, getOrderById, updateOrderStatus };

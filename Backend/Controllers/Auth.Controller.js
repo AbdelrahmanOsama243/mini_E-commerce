@@ -126,9 +126,58 @@ const getMe = async (req, res) => {
   }
 };
 
+const updateUserProfile = async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ message: 'User not authenticated' });
+    }
+
+    const { name, email } = req.body;
+    const updateData = {};
+
+    if (name) {
+      if (typeof name !== 'string' || name.trim().length < 2) {
+        return res.status(400).json({ message: 'Name must be at least 2 characters long' });
+      }
+      updateData.name = name.trim();
+    }
+
+    if (email) {
+      const emailRegex = /^\\w+([.-]?\\w+)*@\\w+([.-]?\\w+)*(\\.\\w{2,3})+$/;
+      if (!emailRegex.test(email)) {
+        return res.status(400).json({ message: 'Please enter a valid email address' });
+      }
+      
+      if (email !== req.user.email) {
+        const userExists = await UserRepo.findUserByEmail(email);
+        if (userExists) {
+          return res.status(409).json({ message: 'Email already in use' });
+        }
+      }
+      updateData.email = email.trim();
+    }
+
+    if (Object.keys(updateData).length === 0) {
+      return res.status(400).json({ message: 'No valid fields provided for update' });
+    }
+
+    const updatedUser = await UserRepo.update(req.user._id, updateData);
+
+    res.status(200).json({
+      _id: updatedUser._id,
+      name: updatedUser.name,
+      email: updatedUser.email,
+      role: updatedUser.role
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   register,
   login,
   logout,
   getMe,
+  updateUserProfile,
 };

@@ -1,62 +1,179 @@
 const mongoose = require('mongoose');
-const CartRepo = require('../Repositories/Cart.Repository');
-const Product = require('../Models/Product.Model');
+const CartRepo = require('../Repos/Carts.Repo');
+const ProductsRepo = require('../Repos/Products.Repo');
+const asyncHandler = require('../Utils/asyncHandler');
+const { sendSuccess } = require('../Utils/response');
+const ApiError = require('../Utils/ApiError');
+const { validateObjectId } = require('../Middlewares/validateObjectId');
 
-const getCart = async (req, res, next) => {
-  try {
-    const cart = await CartRepo.getCartByUserId(req.user.id);
+const getCart = [
+  validateObjectId(['id'], 'user'),
+  asyncHandler(async (req, res, next) => {
+    const userId = req.user?.id;
+    if (!userId) {
+      return next(new ApiError(400, 'User ID is required'));
+    }
+
+    const cart = await CartRepo.getCartByUserId(userId);
 
     if (!cart) {
-      return res.status(404).json({ message: 'Cart not found' });
+      return next(new ApiError(404, 'Cart not found'));
     }
 
-    return res.status(200).json({ cart });
-  } catch (error) {
-    return next(error);
-  }
-};
+    return sendSuccess(res, cart);
+  })
+];
 
-const addItemToCart = async (req, res, next) => {
-  try {
+const addItemToCart = [
+  validateObjectId(['id'], 'user'),
+  validateObjectId(['productId'], 'body'),
+  asyncHandler(async (req, res, next) => {
     const { productId, quantity } = req.body;
-    const userId = req.user.id;
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return next(new ApiError(400, 'User ID is required'));
+    }
 
     // 1. Validate productId
-    if (!productId || !mongoose.Types.ObjectId.isValid(productId)) {
-      return res.status(400).json({ message: 'Valid Product ID is required' });
+    if (!productId) {
+      return next(new ApiError(400, 'Product ID is required'));
     }
 
-    // 2. Validate quantity
-    if (!quantity || quantity <= 0) {
-      return res.status(400).json({ message: 'Quantity must be greater than 0' });
-    }
-
-    // 3. Validate product exists
-    const product = await Product.findById(productId);
-    if (!product) {
-      return res.status(404).json({ message: 'Product not found' });
-    }
-
-    // 4. Business rule: check stock against what's already in the cart
-    const existingCart = await CartRepo.getCartDocumentByUserId(userId);
-    const existingItem = existingCart?.items.find(
-      item => item.productId.toString() === productId.toString()
-    );
-    const combinedQuantity = existingItem ? existingItem.quantity + quantity : quantity;
-
-    if (combinedQuantity > product.stock) {
-      return res.status(400).json({
-        message: `Requested quantity exceeds available stock (${product.stock} left)`
-      });
-    }
-
-    // 5. Add item via repo
-    const cart = await CartRepo.addItemToCart(userId, productId, quantity);
-
-    return res.status(existingItem ? 200 : 201).json({ message: 'Item added to cart', cart });
-  } catch (error) {
-    return next(error);
+  // 2. Validate quantity
+  if (!quantity || quantity <= 0) {
+    return next(new ApiError(400, 'Quantity must be greater than 0'));
   }
-};
 
-module.exports = { getCart, addItemToCart };
+  // 3. Validate product exists
+  const product = await ProductsRepo.findById(productId);
+  if (!product) {
+    return next(new ApiError(404, 'Product not found'));
+  }
+
+  // 4. Business rule: check stock against what's already in the cart
+  let existingCart = await CartRepo.getCartDocumentByUserId(userId);
+  if (!existingCart) {
+    existingCart = await CartRepo.createCart(userId);
+  }
+
+  const existingItem = existingCart?.items.find(
+    item => item.productId.toString() === productId.toString()
+  );
+  const combinedQuantity = existingItem ? existingItem.quantity + quantity : quantity;
+
+  if (combinedQuantity > product.stock) {
+    return next(new ApiError(400, `Requested quantity exceeds available stock (${product.stock} left)`));
+  }
+
+  // 5. Add item via repo
+  const plainItems = existingCart.items.map(item => ({
+    _id: item._id,
+    productId: item.productId,
+    quantity: item.productId.toString() === productId.toString() ? combinedQuantity : item.quantity
+  }));
+  
+  if (!existingItem) {
+    plainItems.push({ productId, quantity });
+  }
+
+  const cart = await CartRepo.updateCart(existingCart._id, plainItems);
+
+  return sendSuccess(res, cart, 'Item added to cart', existingItem ? 200 : 201);
+  })
+];
+
+const updateCartItemQuantity = [
+  validateObjectId(['id'], 'user'),
+  validateObjectId(['itemId'], 'params'),
+  asyncHandler(async (req, res, next) => {
+    const { itemId } = req.params;
+    const { quantity } = req.body;
+    const userId = req.user?.id;
+
+    if (!quantity || quantity <= 0) {
+      return next(new ApiError(400, 'Quantity must be greater than 0'));
+    }
+
+    const existingCart = await CartRepo.getCartDocumentByUserId(userId);
+    if (!existingCart) {
+      return next(new ApiError(404, 'Cart not found'));
+    }
+
+    const item = existingCart.items.find(i => i._id.toString() === itemId);
+    if (!item) {
+      return next(new ApiError(404, 'Item not found in cart'));
+    }
+
+    const product = await ProductsRepo.findById(item.productId);
+    if (!product) {
+      return next(new ApiError(404, 'Product not found'));
+    }
+
+    if (quantity > product.stock) {
+      return next(new ApiError(400, `Requested quantity exceeds available stock (${product.stock} left)`));
+    }
+
+    const plainItems = existingCart.items.map(i => ({
+      _id: i._id,
+      productId: i.productId,
+      quantity: i._id.toString() === itemId ? quantity : i.quantity
+    }));
+
+    const cart = await CartRepo.updateCart(existingCart._id, plainItems);
+    return sendSuccess(res, cart, 'Item quantity updated');
+  })
+];
+
+const removeItemFromCart = [
+  validateObjectId(['id'], 'user'),
+  validateObjectId(['itemId'], 'params'),
+  asyncHandler(async (req, res, next) => {
+    const { itemId } = req.params;
+    const userId = req.user?.id;
+
+    const existingCart = await CartRepo.getCartDocumentByUserId(userId);
+    if (!existingCart) {
+      return next(new ApiError(404, 'Cart not found'));
+    }
+
+    const itemExists = existingCart.items.some(i => i._id.toString() === itemId);
+    if (!itemExists) {
+      return next(new ApiError(404, 'Item not found in cart'));
+    }
+
+    const plainItems = existingCart.items
+      .filter(i => i._id.toString() !== itemId)
+      .map(i => ({
+        _id: i._id,
+        productId: i.productId,
+        quantity: i.quantity
+      }));
+
+    const cart = await CartRepo.updateCart(existingCart._id, plainItems);
+    return sendSuccess(res, cart, 'Item removed from cart');
+  })
+];
+
+const clearCart = [
+  validateObjectId(['id'], 'user'),
+  asyncHandler(async (req, res, next) => {
+    const userId = req.user?.id;
+
+    const existingCart = await CartRepo.getCartDocumentByUserId(userId);
+    if (!existingCart) {
+      return next(new ApiError(404, 'Cart not found'));
+    }
+
+    const cart = await CartRepo.updateCart(existingCart._id, []);
+    return sendSuccess(res, cart, 'Cart cleared successfully');
+  })
+];
+
+module.exports = { 
+  getCart, 
+  addItemToCart, 
+  updateCartItemQuantity, 
+  removeItemFromCart, 
+  clearCart 
+};

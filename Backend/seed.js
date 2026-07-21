@@ -9,6 +9,7 @@
 
 require("dotenv").config();
 const mongoose = require("mongoose");
+const bcrypt = require("bcrypt");
 const { connect, clean } = require("./Config/DB");
 
 const User = require("./Models/User.Model");
@@ -20,26 +21,38 @@ const Order = require("./Models/orders.Model");
 
 const users = [
   {
+    name: "Ali Hosam",
+    email: "body55535@gmail.com",
+    password: "Admin@123",
+    role: "admin",
+  },
+  {
     name: "Admin User",
     email: "admin@ecommerce.com",
     password: "Admin@123",
     role: "admin",
   },
   {
-    name: "Ahmed Hassan",
-    email: "ahmed@example.com",
+    name: "John Doe",
+    email: "john@example.com",
     password: "User@123",
     role: "user",
   },
   {
-    name: "Sara Mohamed",
-    email: "sara@example.com",
+    name: "Jane Smith",
+    email: "jane@example.com",
     password: "User@123",
     role: "user",
   },
   {
-    name: "Omar Ali",
-    email: "omar@example.com",
+    name: "Alice Johnson",
+    email: "alice@example.com",
+    password: "User@123",
+    role: "user",
+  },
+  {
+    name: "Bob Williams",
+    email: "bob@example.com",
     password: "User@123",
     role: "user",
   },
@@ -47,81 +60,85 @@ const users = [
 
 const products = [
   {
-    name: "Wireless Bluetooth Headphones",
-    description:
-      "Premium noise-cancelling wireless headphones with 30-hour battery life.",
-    price: 299.99,
-    category: "Electronics",
+    name: "Geometric Vase",
+    description: "Matte black ceramic. Raw texture. Perfect for dry arrangements.",
+    price: 120,
+    category: "decor",
     stock: 50,
-    images: [
-      "https://placehold.co/600x400?text=Headphones+Front",
-      "https://placehold.co/600x400?text=Headphones+Side",
-    ],
+    image: "https://picsum.photos/seed/vase/600/600"
   },
   {
-    name: "Mechanical Gaming Keyboard",
-    description:
-      "RGB backlit mechanical keyboard with Cherry MX Blue switches.",
-    price: 149.99,
-    category: "Electronics",
+    name: "Industrial Lamp",
+    description: "Minimalist industrial table lamp with exposed bulb.",
+    price: 85,
+    category: "lighting",
     stock: 120,
-    images: ["https://placehold.co/600x400?text=Keyboard"],
+    image: "https://picsum.photos/seed/lamp/600/600"
   },
   {
-    name: "Running Shoes Pro",
-    description: "Lightweight running shoes with responsive cushioning.",
-    price: 89.99,
-    category: "Sports",
+    name: "Concrete Bookend",
+    description: "Solid concrete bookend set. Architectural inspired design.",
+    price: 45,
+    category: "decor",
     stock: 200,
-    images: [
-      "https://placehold.co/600x400?text=Shoes+Front",
-      "https://placehold.co/600x400?text=Shoes+Back",
-    ],
+    image: "https://images.unsplash.com/photo-1683472698819-d069fc7c820d?w=600&q=80"
   },
   {
-    name: "Stainless Steel Water Bottle",
-    description: "Double-wall insulated water bottle — keeps drinks cold 24h.",
-    price: 24.99,
-    category: "Accessories",
-    stock: 300,
-    images: ["https://placehold.co/600x400?text=Bottle"],
+    name: "Linen Duvet Cover",
+    description: "100% French flax linen duvet cover. Breathable and soft.",
+    price: 150,
+    category: "bedding",
+    stock: 30,
+    image: "https://images.unsplash.com/photo-1634665810235-011d663754e7?w=600&q=80"
   },
   {
-    name: "Leather Laptop Bag",
-    description: "Genuine leather laptop bag fits up to 15.6-inch laptops.",
-    price: 199.99,
-    category: "Accessories",
+    name: "Ceramic Dining Plates",
+    description: "Set of 4 handcrafted ceramic dinner plates. Uneven edges.",
+    price: 110,
+    category: "dining",
     stock: 75,
-    images: [
-      "https://placehold.co/600x400?text=Bag+Front",
-      "https://placehold.co/600x400?text=Bag+Open",
-    ],
+    image: "https://images.unsplash.com/photo-1633856858940-42229cb53dd3?w=600&q=80"
   },
   {
-    name: "Smart Watch Series X",
-    description:
-      "Health and fitness tracking smartwatch with AMOLED display.",
-    price: 349.99,
-    category: "Electronics",
-    stock: 60,
-    images: ["https://placehold.co/600x400?text=SmartWatch"],
+    name: "Brass Pendant Light",
+    description: "Mid-century modern brass pendant light fixture.",
+    price: 240,
+    category: "lighting",
+    stock: 25,
+    image: "https://images.unsplash.com/photo-1765282947675-2dd83fb46ebd?w=600&q=80"
   },
   {
-    name: "Organic Green Tea (50 Bags)",
-    description: "Premium Japanese organic green tea bags.",
-    price: 12.99,
-    category: "Food",
-    stock: 500,
-    images: ["https://placehold.co/600x400?text=GreenTea"],
+    name: "Cotton Throw Blanket",
+    description: "Woven cotton throw with fringe detail. Cozy and textured.",
+    price: 65,
+    category: "bedding",
+    stock: 100,
+    image: "https://images.unsplash.com/photo-1548536207-7b32566ca27d?w=600&q=80"
   },
   {
-    name: "Yoga Mat Premium",
-    description: "Non-slip 6mm thick yoga mat with carrying strap.",
-    price: 39.99,
-    category: "Sports",
-    stock: 150,
-    images: ["https://placehold.co/600x400?text=YogaMat"],
+    name: "Wine Glass Set",
+    description: "Set of 6 ribbed crystal wine glasses.",
+    price: 80,
+    category: "dining",
+    stock: 80,
+    image: "https://images.unsplash.com/photo-1594045713652-8a3d4cdec4c9?w=600&q=80"
   },
+  {
+    name: "Abstract Canvas Art",
+    description: "Large monochromatic abstract canvas painting.",
+    price: 350,
+    category: "decor",
+    stock: 10,
+    image: "https://images.unsplash.com/photo-1618331833071-ce81bd50d300?w=600&q=80"
+  },
+  {
+    name: "Oak Dining Table",
+    description: "Solid oak dining table with brutalist leg design. Seats 6.",
+    price: 899,
+    category: "dining",
+    stock: 5,
+    image: "https://images.unsplash.com/photo-1585128903994-9788298932a6?w=600&q=80"
+  }
 ];
 
 // ─── Seed Function ───────────────────────────────────────────
@@ -131,14 +148,18 @@ async function seed() {
     await connect();
     console.log("✅ Connected to database\n");
 
-    // Optional: clean existing data
-    if (process.argv.includes("--clean")) {
-      await clean();
-      console.log("🗑️  Existing data cleared\n");
-    }
+    // Clean existing data
+    await clean();
+    console.log("🗑️  Existing data cleared\n");
 
-    // 1. Seed Users (passwords are auto-hashed by the pre-save hook)
-    const createdUsers = await User.create(users);
+    // 1. Seed Users (hash passwords with bcrypt before inserting)
+    const usersWithHashedPasswords = await Promise.all(
+      users.map(async (u) => ({
+        ...u,
+        password: await bcrypt.hash(u.password, 12),
+      }))
+    );
+    const createdUsers = await User.create(usersWithHashedPasswords);
     console.log(`👤 ${createdUsers.length} users seeded`);
 
     // 2. Seed Products
@@ -149,15 +170,14 @@ async function seed() {
     const regularUsers = createdUsers.filter((u) => u.role === "user");
 
     const carts = regularUsers.map((user, idx) => ({
-      user: user._id,
+      userId: user._id,
       items: [
         {
-          product: createdProducts[idx % createdProducts.length]._id,
+          productId: createdProducts[idx % createdProducts.length]._id,
           quantity: 2,
         },
         {
-          product:
-            createdProducts[(idx + 1) % createdProducts.length]._id,
+          productId: createdProducts[(idx + 1) % createdProducts.length]._id,
           quantity: 1,
         },
       ],
@@ -173,7 +193,7 @@ async function seed() {
         createdProducts[(idx + 2) % createdProducts.length],
       ];
       const items = orderedProducts.map((p) => ({
-        product: p._id,
+        productId: p._id,
         quantity: 1,
         priceAtPurchase: p.price,
       }));
@@ -183,10 +203,10 @@ async function seed() {
       );
 
       return {
-        user: user._id,
+        userId: user._id,
         items,
         totalPrice,
-        status: idx === 0 ? "paid" : "pending",
+        status: idx === 0 ? "shipped" : "pending",
         shippingAddress: `${123 + idx} Example Street, Cairo, Egypt`,
       };
     });
@@ -200,7 +220,7 @@ async function seed() {
     console.log("════════════════════════════════════════");
     console.log("\n📌 Test Credentials:");
     console.log("   Admin  → admin@ecommerce.com / Admin@123");
-    console.log("   User   → ahmed@example.com   / User@123");
+    console.log("   User   → john@example.com    / User@123");
     console.log("");
   } catch (err) {
     console.error("❌ Seeding failed:", err.message);
