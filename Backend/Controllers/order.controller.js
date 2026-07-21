@@ -69,17 +69,17 @@ const createOrder = asyncHandler(async (req, res, next) => {
 
 const getOrders = asyncHandler(async (req, res, next) => {
   const userId = req.user?.id;
-  let orders;
+  let result;
 
   if (req.query.all === "true" && req.user?.role === "admin") {
     // Admin gets all orders
-    orders = await OrdersRepository.findAll({}, { populate: "userId items.productId" });
+    result = await OrdersRepository.findAll({}, { populate: "userId items.productId", limit: 1000 });
   } else {
     // User gets their own orders
-    orders = await OrdersRepository.findAll({ userId }, { populate: "items.productId" });
+    result = await OrdersRepository.findAll({ userId }, { populate: "items.productId", limit: 1000 });
   }
 
-  return sendSuccess(res, orders);
+  return sendSuccess(res, result.items);
 });
 
 const getOrderById = [
