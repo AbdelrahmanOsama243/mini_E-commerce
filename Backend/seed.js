@@ -219,7 +219,7 @@ async function seed() {
     console.log("  🌱 Seeding completed successfully!");
     console.log("════════════════════════════════════════");
     console.log("\n📌 Test Credentials:");
-    console.log("   Admin  → admin@ecommerce.com / Admin@123");
+    console.log("   Admin  → body55535@gmail.com / Admin@123");
     console.log("   User   → john@example.com    / User@123");
     console.log("");
   } catch (err) {

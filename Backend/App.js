@@ -1,11 +1,14 @@
 require("dotenv").config();
 const express = require("express");
+const helmet = require("helmet");
+const cors = require("cors");
 const { connect } = require("./Config/DB");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-const cors = require("cors");
+// Security headers
+app.use(helmet());
 
 // Middleware
 app.use(cors());

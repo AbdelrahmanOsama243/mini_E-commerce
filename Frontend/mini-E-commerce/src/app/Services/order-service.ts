@@ -7,7 +7,7 @@ import {
   OrdersResponse,
   CreateOrderPayload,
   UpdateOrderStatusPayload
-} from '../Models/iorder';
+} from '../../Models/iorder';
 
 @Injectable({
   providedIn: 'root'

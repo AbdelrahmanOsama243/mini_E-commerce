@@ -10,7 +10,7 @@ import {
   ProductQueryParams,
   CreateProductPayload,
   UpdateProductPayload
-} from '../Models/iproduct';
+} from '../../Models/iproduct';
 
 export type { Product, ProductsResponse, SingleProductResponse, DeleteProductResponse, ProductQueryParams, CreateProductPayload, UpdateProductPayload };
 
@@ -23,7 +23,6 @@ export class ProductService {
 
   constructor(private http: HttpClient) {}
 
-  // ── Helpers ────────────────────────────────────────────────────────────────
 
   private getAuthHeaders(): HttpHeaders {
     const token = localStorage.getItem('token') ?? '';
@@ -33,9 +32,7 @@ export class ProductService {
     });
   }
 
-  // ── Public API ─────────────────────────────────────────────────────────────
 
-  /** GET /api/products — public, supports search / category / page / limit */
   getProducts(params: ProductQueryParams = {}): Observable<ProductsResponse> {
     let httpParams = new HttpParams();
 
@@ -47,12 +44,10 @@ export class ProductService {
     return this.http.get<ProductsResponse>(this.apiUrl, { params: httpParams });
   }
 
-  /** GET /api/products/:id — public */
   getProductById(id: string): Observable<SingleProductResponse> {
     return this.http.get<SingleProductResponse>(`${this.apiUrl}/${id}`);
   }
 
-  /** POST /api/products — admin only */
   createProduct(payload: CreateProductPayload): Observable<SingleProductResponse> {
     return this.http.post<SingleProductResponse>(
       this.apiUrl,
@@ -61,7 +56,6 @@ export class ProductService {
     );
   }
 
-  /** PUT /api/products/:id — admin only */
   updateProduct(id: string, payload: UpdateProductPayload): Observable<SingleProductResponse> {
     return this.http.put<SingleProductResponse>(
       `${this.apiUrl}/${id}`,
@@ -70,7 +64,6 @@ export class ProductService {
     );
   }
 
-  /** DELETE /api/products/:id — admin only */
   deleteProduct(id: string): Observable<DeleteProductResponse> {
     return this.http.delete<DeleteProductResponse>(
       `${this.apiUrl}/${id}`,

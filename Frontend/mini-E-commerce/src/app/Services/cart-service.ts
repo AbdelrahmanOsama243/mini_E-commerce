@@ -6,7 +6,7 @@ import {
   CartResponse,
   AddItemPayload,
   UpdateItemPayload
-} from '../Models/icart';
+} from '../../Models/icart';
 
 @Injectable({
   providedIn: 'root'
