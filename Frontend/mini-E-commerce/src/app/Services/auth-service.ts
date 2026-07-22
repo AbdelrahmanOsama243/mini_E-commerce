@@ -12,7 +12,7 @@ import {
   LogoutResponse,
   GetMeResponse,
   UpdateProfileResponse
-} from '../../Models/iauth';
+} from '../Models/iauth';
 
 @Injectable({
   providedIn: 'root'
@@ -27,7 +27,6 @@ export class AuthService {
 
   constructor(private http: HttpClient) {}
 
-  // ── Session helpers ────────────────────────────────────────────────────────
 
   /** Persist accessToken, refreshToken and user profile after login / register. */
   saveSession(response: AuthResponse): void {
@@ -58,7 +57,6 @@ export class AuthService {
     return this.getToken() !== null;
   }
 
-  // ── Private helpers ────────────────────────────────────────────────────────
 
   private getAuthHeaders(): HttpHeaders {
     return new HttpHeaders({
@@ -67,7 +65,7 @@ export class AuthService {
     });
   }
 
-  // ── Auth API ───────────────────────────────────────────────────────────────
+
 
   /** POST /api/users/register → 201 { user, accessToken, refreshToken } */
   register(payload: RegisterPayload): Observable<AuthResponse> {
