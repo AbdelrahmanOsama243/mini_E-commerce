@@ -1,0 +1,33 @@
+<h1>Cart</h1>
+
+<div *ngIf="loading()">Loading cart...</div>
+
+<div *ngIf="!loading() && error()">{{ error() }}</div>
+
+<div *ngIf="!loading() && !error() && cart() as currentCart">
+  <div *ngIf="currentCart.items.length; else emptyCart">
+    <ul>
+      <li *ngFor="let item of currentCart.items">
+        <div>{{ item.productId.name }}</div>
+        <div>Price: {{ item.productId.price }}</div>
+        <div>
+          Quantity:
+          <input
+            type="number"
+            min="1"
+            [value]="item.quantity"
+            (change)="onQuantityChange(item, $event)"
+          />
+        </div>
+        <button type="button" (click)="removeItem(item)">Remove</button>
+      </li>
+    </ul>
+
+    <div>Total: {{ totalPrice() }}</div>
+    <button type="button" (click)="clearCart()">Clear cart</button>
+  </div>
+
+  <ng-template #emptyCart>
+    <p>Cart is empty.</p>
+  </ng-template>
+</div>
