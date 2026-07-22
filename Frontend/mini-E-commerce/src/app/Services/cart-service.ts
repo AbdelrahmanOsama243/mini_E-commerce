@@ -20,7 +20,13 @@ export class CartService {
   // ── Helpers ────────────────────────────────────────────────────────────────
 
   private getAuthHeaders(): HttpHeaders {
-    const token = localStorage.getItem('token') ?? '';
+    const token = localStorage.getItem('token');
+    if (!token) {
+      return new HttpHeaders({
+        'Content-Type': 'application/json'
+      })
+    }
+
     return new HttpHeaders({
       'Content-Type': 'application/json',
       Authorization: `Bearer ${token}`
