@@ -3,7 +3,9 @@
   <app-toast></app-toast>
 
   <!-- Header Navbar -->
-  <app-navbar></app-navbar>
+  @if (showNavbar) {
+    <app-navbar></app-navbar>
+  }
 
   <!-- Core Page Routing Content -->
   <main class="flex-grow flex flex-col">

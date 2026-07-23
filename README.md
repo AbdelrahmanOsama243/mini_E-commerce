@@ -1,8 +1,10 @@
-# Mini E-Commerce API
+# Mini E-Commerce
 
-This project is a backend API for a mini e-commerce application built with Node.js and Express.
+This repository contains a full-stack mini e-commerce application. It consists of a backend API built with Node.js and Express, and a frontend built with Angular.
 
 ## Features
+
+### Backend
 - User authentication with JWT (Access Token + Refresh Token)
 - Role-based access control (Admin, User)
 - User registration and login
@@ -10,35 +12,48 @@ This project is a backend API for a mini e-commerce application built with Node.
 - Error handling
 - MongoDB integration
 
-## Installation
+### Frontend
+- Angular 21 based single page application
+- User-friendly interface for e-commerce interactions
+- Component-based architecture
 
-1. Clone the repository
+## Installation & Setup
+
+1. **Clone the repository**
 ```bash
-git clone <repository-url>
+git clone https://github.com/AbdelrahmanOsama243/mini_E-commerce.git
 cd mini_E-commerce
 ```
 
-2. Install dependencies
+2. **Backend Setup**
 ```bash
+cd Backend
 npm install
 ```
-
-3. Set up environment variables
-Create a `.env` file in the root directory with the following variables:
+Create a `.env` file in the `Backend` directory with the following variables:
 ```env
 PORT=3000
 MONGO_URI=your db link from mongodb compass
 JWT_SECRET=your_jwt_secret
-JWT_REFRESH_SECRET=your_refresh_secret
+JWT_REFRESH_SECRET=your_refresh_secret 
 ```
-
-## Usage
-
-Start the development server:
+Start the backend development server:
 ```bash
 npm run dev
 ```
 The server will start on `http://localhost:3000`.
+
+3. **Frontend Setup**
+Open a new terminal window, then:
+```bash
+cd Frontend/mini-E-commerce
+npm install
+```
+Start the Angular development server:
+```bash
+npm start or use `ng serve`
+```
+Open your browser and navigate to `http://localhost:4200/`.
 
 ## API Documentation
 
@@ -104,10 +119,22 @@ Errors are handled using centralized middleware:
 
 ## Technologies Used
 
-- Node.js
-- Express.js
-- MongoDB
-- Mongoose
+### Backend
+- Node.js & Express.js
+- MongoDB & Mongoose
 - JWT (JSON Web Tokens)
 - bcrypt (for password hashing)
 - dotenv (for environment variables)
+
+### Frontend
+- Angular (v21)
+- TypeScript
+- RxJS
+- HTML/CSS
+
+## Contributors
+
+- AbdelrahmanOsama243
+- hazem327
+- Shamss05 (Shams Hesham)
+- Mohamed-bakr009 (Mohamed bakr)

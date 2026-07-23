@@ -1,54 +1,66 @@
 import { Routes } from '@angular/router';
 import { AuthGuard, AdminGuard } from './core/guards/auth.guard';
 
+import { HomeComponent } from './Feather/home/home';
+import { LoginComponent } from './Feather/auth/login/login';
+import { RegisterComponent } from './Feather/auth/register/register';
+import { ProductListComponent } from './Feather/products/product-list/product-list';
+import { ProductDetailComponent } from './Feather/products/product-detail/product-detail';
+import { CartComponent } from './Feather/cart/cart';
+import { CheckoutComponent } from './Feather/checkout-page/checkout-page';
+import { OrderHistoryComponent } from './Feather/orders/order-list/order-list';
+import { OrderDetailComponent } from './Feather/orders/order-detail/order-detail';
+import { AdminProductsComponent } from './Feather/admin-products/product-table/product-table';
+import { NotFoundComponent } from './shared/not-found/not-found';
+
 export const routes: Routes = [
   {
     path: '',
-    loadComponent: () => import('./features/home/home').then(m => m.HomeComponent)
+    component: HomeComponent
   },
   {
     path: 'login',
-    loadComponent: () => import('./features/auth/login/login').then(m => m.LoginComponent)
+    component: LoginComponent
   },
   {
     path: 'register',
-    loadComponent: () => import('./features/auth/register/register').then(m => m.RegisterComponent)
+    component: RegisterComponent
   },
   {
     path: 'products',
-    loadComponent: () => import('./features/products/product-list/product-list').then(m => m.ProductListComponent)
+    component: ProductListComponent
   },
   {
     path: 'products/:id',
-    loadComponent: () => import('./features/products/product-detail/product-detail').then(m => m.ProductDetailComponent)
+    component: ProductDetailComponent
   },
   {
     path: 'cart',
-    loadComponent: () => import('./features/cart/cart-page/cart-page').then(m => m.CartComponent),
+    component: CartComponent,
     canActivate: [AuthGuard]
   },
   {
     path: 'checkout',
-    loadComponent: () => import('./features/checkout/checkout-page/checkout-page').then(m => m.CheckoutComponent),
+    component: CheckoutComponent,
     canActivate: [AuthGuard]
   },
   {
     path: 'orders',
-    loadComponent: () => import('./features/orders/order-list/order-list').then(m => m.OrderHistoryComponent),
+    component: OrderHistoryComponent,
     canActivate: [AuthGuard]
   },
   {
     path: 'orders/:id',
-    loadComponent: () => import('./features/orders/order-detail/order-detail').then(m => m.OrderDetailComponent),
+    component: OrderDetailComponent,
     canActivate: [AuthGuard]
   },
   {
     path: 'admin/products',
-    loadComponent: () => import('./features/admin-products/product-table/product-table').then(m => m.AdminProductsComponent),
+    component: AdminProductsComponent,
     canActivate: [AuthGuard, AdminGuard]
   },
   {
     path: '**',
-    redirectTo: ''
+    component: NotFoundComponent
   }
 ];

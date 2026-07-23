@@ -1,40 +1,29 @@
 import { inject } from '@angular/core';
 import { Router, CanActivateFn } from '@angular/router';
-import { AuthService } from '../services/auth.service';
-import { map, take } from 'rxjs/operators';
+import { AuthService } from '../Services/auth-service';
 
 export const AuthGuard: CanActivateFn = (route, state) => {
   const authService = inject(AuthService);
   const router = inject(Router);
 
-  return authService.currentUser$.pipe(
-    take(1),
-    map(user => {
-      if (user) {
-        return true;
-      }
+  if (authService.isLoggedIn()) {
+    return true;
+  }
 
-      // Redirect to login page with return url
-      router.navigate(['/login'], { queryParams: { returnUrl: state.url } });
-      return false;
-    })
-  );
+  // Redirect to login page with return url
+  router.navigate(['/login'], { queryParams: { returnUrl: state.url } });
+  return false;
 };
 
 export const AdminGuard: CanActivateFn = (route, state) => {
   const authService = inject(AuthService);
   const router = inject(Router);
 
-  return authService.currentUser$.pipe(
-    take(1),
-    map(user => {
-      if (user && user.role === 'admin') {
-        return true;
-      }
+  if (authService.isAdmin()) {
+    return true;
+  }
 
-      // Redirect to home page
-      router.navigate(['/']);
-      return false;
-    })
-  );
+  // Redirect to home page
+  router.navigate(['/']);
+  return false;
 };

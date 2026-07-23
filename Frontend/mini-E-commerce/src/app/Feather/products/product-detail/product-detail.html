@@ -1,0 +1,94 @@
+<app-loading-spinner [visible]="loading()"></app-loading-spinner>
+    
+<main class="flex-grow container mx-auto px-6 py-12 max-w-5xl flex flex-col gap-6">
+  <a routerLink="/products" class="font-headline font-bold uppercase text-sm hover:text-secondary flex items-center gap-2 self-start">
+    <span class="material-symbols-outlined text-lg">arrow_back</span>
+    Back to shop
+  </a>
+
+  @if (product(); as prod) {
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-12 mt-4">
+      <!-- Image Block -->
+      <div class="border-4 border-black bg-surface-container brutalist-shadow aspect-square overflow-hidden">
+        <img 
+          [src]="prod.image || 'https://picsum.photos/seed/product/600/600'" 
+          [alt]="prod.name"
+          class="w-full h-full object-cover"
+        />
+      </div>
+
+      <!-- Product Details Block -->
+      <div class="flex flex-col justify-between p-2">
+        <div>
+          <span class="font-label uppercase tracking-widest text-xs font-bold text-secondary mb-2 block">
+            {{ prod.category }}
+          </span>
+          <h1 class="font-display text-4xl md:text-5xl font-black uppercase tracking-tighter leading-none mb-4">
+            {{ prod.name }}
+          </h1>
+          <p class="font-headline text-3xl font-black mb-6 tracking-tight">${{ prod.price }}</p>
+          
+          <div class="border-y-4 border-black py-6 mb-6">
+            <h3 class="font-headline font-bold uppercase text-sm mb-2 text-on-surface-variant">Description</h3>
+            <p class="font-body text-on-surface-variant leading-relaxed">{{ prod.description }}</p>
+          </div>
+
+          <!-- Stock review -->
+          <div class="flex items-center gap-2 mb-6 font-headline font-bold uppercase text-sm">
+            <span class="w-3.5 h-3.5 brutalist-border" [ngClass]="prod.stock > 0 ? 'bg-primary-container' : 'bg-secondary'"></span>
+            @if (prod.stock > 10) {
+              <span class="text-primary-fixed-dim">In Stock ({{ prod.stock }} units left)</span>
+            } @else if (prod.stock > 0) {
+              <span class="text-secondary font-black">Only {{ prod.stock }} units left!</span>
+            } @else {
+              <span class="text-secondary font-black">Out of stock</span>
+            }
+          </div>
+        </div>
+
+        <!-- Quantity & Add action -->
+        @if (prod.stock > 0) {
+          <div class="flex flex-wrap gap-4 items-center mt-6">
+            <!-- Quantity Controls -->
+            <div class="flex border-4 border-black h-14 bg-white brutalist-shadow-sm">
+              <button 
+                (click)="decreaseQty()" 
+                [disabled]="quantity() <= 1"
+                aria-label="Decrease quantity" 
+                class="w-12 h-full flex items-center justify-center hover:bg-primary-container border-r-4 border-black font-bold text-xl transition-colors disabled:opacity-50"
+              >
+                <span class="material-symbols-outlined">remove</span>
+              </button>
+              <div class="w-14 h-full flex items-center justify-center font-headline font-black text-xl">
+                {{ quantity() }}
+              </div>
+              <button 
+                (click)="increaseQty(prod.stock)" 
+                [disabled]="quantity() >= prod.stock"
+                aria-label="Increase quantity" 
+                class="w-12 h-full flex items-center justify-center hover:bg-primary-container border-l-4 border-black font-bold text-xl transition-colors disabled:opacity-50"
+              >
+                <span class="material-symbols-outlined">add</span>
+              </button>
+            </div>
+
+            <!-- Add to Cart Button -->
+            <button 
+              (click)="addToCart()" 
+              class="flex-grow py-4 px-8 bg-primary text-on-primary text-xl brutalist-button brutalist-shadow brutalist-shadow-hover"
+            >
+              Add to Cart
+            </button>
+          </div>
+        } @else {
+          <button 
+            disabled 
+            class="w-full py-4 bg-surface-variant text-primary/40 text-xl border-4 border-primary/40 font-headline uppercase font-black cursor-not-allowed"
+          >
+            Sold Out
+          </button>
+        }
+      </div>
+    </div>
+  }
+</main>

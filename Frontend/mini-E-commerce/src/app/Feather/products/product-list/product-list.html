@@ -1,0 +1,104 @@
+<app-loading-spinner [visible]="loading()"></app-loading-spinner>
+    
+<main class="flex-grow flex flex-col md:flex-row w-full max-w-7xl mx-auto px-6 py-12 gap-8">
+  <!-- Left Sidebar Filters -->
+  <aside class="w-full md:w-64 flex-shrink-0 flex flex-col gap-6">
+    <!-- Categories Filter -->
+    <div class="bg-surface-container brutalist-border p-6 brutalist-shadow">
+      <h3 class="font-headline font-bold text-xl uppercase mb-4 border-b-4 border-black pb-2">Categories</h3>
+      <ul class="space-y-3 font-headline font-semibold">
+        @for (cat of categories; track cat.id) {
+          <li>
+            <label class="flex items-center gap-3 cursor-pointer group">
+              <input 
+                type="checkbox"
+                [checked]="selectedCategory() === cat.id"
+                (change)="toggleCategory(cat.id)"
+                class="form-checkbox h-5 w-5 text-primary border-4 border-black rounded-none focus:ring-0 focus:ring-offset-0 bg-background checked:bg-primary cursor-pointer"
+              />
+              <span class="group-hover:text-secondary transition-colors uppercase">{{ cat.name }}</span>
+            </label>
+          </li>
+        }
+      </ul>
+    </div>
+
+    <!-- Price Range Filter -->
+    <div class="bg-surface-container brutalist-border p-6 brutalist-shadow">
+      <h3 class="font-headline font-bold text-xl uppercase mb-4 border-b-4 border-black pb-2">Max Price</h3>
+      <div class="space-y-4">
+        <input 
+          type="range" 
+          min="0" 
+          max="1000" 
+          [(ngModel)]="priceLimit"
+          (change)="applyPriceFilter()"
+          class="w-full h-2 bg-primary rounded-none appearance-none cursor-pointer accent-secondary"
+        />
+        <div class="flex justify-between font-headline font-bold text-sm">
+          <span>$0</span>
+          <span class="text-secondary font-black">${{ priceLimit() }}</span>
+          <span>$1000+</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reset Button -->
+    <button 
+      (click)="resetFilters()" 
+      class="w-full py-4 bg-primary text-on-primary text-xl brutalist-button brutalist-shadow brutalist-shadow-hover"
+    >
+      Reset Filters
+    </button>
+  </aside>
+
+  <!-- Main Product Grid -->
+  <section class="flex-grow flex flex-col gap-6">
+    <div class="flex justify-between items-end border-b-4 border-black pb-4">
+      <h1 class="text-4xl md:text-6xl font-headline font-black uppercase tracking-tighter">
+        {{ selectedCategory() ? selectedCategory() : 'Shop All' }}
+      </h1>
+      <span class="font-headline font-bold text-lg hidden sm:block">
+        Showing {{ filteredProducts().length }} Results
+      </span>
+    </div>
+
+    <!-- Search term alert if any -->
+    @if (searchTerm()) {
+      <div class="bg-primary-container brutalist-border p-4 font-headline font-bold uppercase flex justify-between items-center">
+        <span>Search results for: "{{ searchTerm() }}"</span>
+        <button (click)="clearSearch()" class="hover:text-secondary flex items-center justify-center p-1">
+          <span class="material-symbols-outlined text-lg">close</span>
+        </button>
+      </div>
+    }
+
+    <!-- Empty State -->
+    @if (!loading() && filteredProducts().length === 0) {
+      <div class="bg-surface-variant brutalist-border p-12 text-center brutalist-shadow">
+        <span class="material-symbols-outlined text-6xl text-primary/45 mb-4">search_off</span>
+        <h3 class="font-headline font-black text-2xl uppercase mb-2">No Products Found</h3>
+        <p class="font-body text-on-surface-variant max-w-md mx-auto mb-6">
+          We couldn't find any products matching your filters. Try selecting another category or resetting filters.
+        </p>
+        <button (click)="resetFilters()" class="px-6 py-2 bg-primary text-on-primary font-headline font-bold uppercase hover:bg-secondary hover:text-primary transition-colors">
+          Reset Filters
+        </button>
+      </div>
+    }
+
+    <!-- Product Grid -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+      @for (prod of filteredProducts(); track prod._id) {
+        <app-product-card [product]="prod"></app-product-card>
+      }
+    </div>
+
+    <!-- Infinite Scroll Sentinel -->
+    @if (hasMorePages() && filteredProducts().length > 0) {
+      <div #scrollSentinel class="mt-12 flex justify-center py-8">
+        <span class="material-symbols-outlined text-4xl text-primary/40 animate-spin">progress_activity</span>
+      </div>
+    }
+  </section>
+</main>

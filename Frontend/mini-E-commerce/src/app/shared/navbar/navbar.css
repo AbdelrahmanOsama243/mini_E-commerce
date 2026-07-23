@@ -1,0 +1,19 @@
+.logout-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #dc2626;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.3s ease;
+  z-index: 0;
+}
+.logout-btn:hover::before {
+  transform: scaleX(1);
+}
+.logout-btn:hover span {
+  color: white;
+}

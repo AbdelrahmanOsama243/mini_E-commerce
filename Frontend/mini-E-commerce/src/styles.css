@@ -1,57 +1,81 @@
-/* Global CSS styles and Bauhaus Neo-Brutalist styles */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-.brutalist-border {
-  border: 3px solid #1a1a1a;
-}
+@layer base {
+  body {
+    font-family: 'Inter', sans-serif;
+  }
+  h1, h2, h3, h4, h5, h6, .font-headline, .font-display, .font-label {
 
-.brutalist-shadow {
-  box-shadow: 6px 6px 0px 0px #1a1a1a;
-}
-
-.brutalist-shadow-hover {
-  transition: all 0.15s ease-in-out;
-}
-.brutalist-shadow-hover:hover {
-  box-shadow: 2px 2px 0px 0px #1a1a1a;
-  transform: translate(4px, 4px);
+    font-family: 'Space Grotesk', sans-serif;
+  }
 }
 
-.brutalist-button {
-  border: 3px solid #1a1a1a;
-  text-transform: uppercase;
-  font-family: 'Space Grotesk', sans-serif;
-  font-weight: 700;
-  transition: all 0.15s ease-in-out;
-}
-.brutalist-button:hover {
-  background-color: #1a1a1a;
-  color: #ffffff;
-}
+@layer components {
+  /* Bauhaus Neo-Brutalist Styles */
+  .brutalist-border {
+    border: 4px solid #000000;
+  }
+  
+  .brutalist-shadow {
+    box-shadow: 6px 6px 0px 0px #000000;
+  }
+  
+  .brutalist-shadow-sm {
+    box-shadow: 4px 4px 0px 0px #000000;
+  }
+  
+  .brutalist-shadow-hover {
+    transition: all 0.2s ease;
+  }
+  
+  .brutalist-shadow-hover:hover {
+    box-shadow: 2px 2px 0px 0px #000000;
+    transform: translate(4px, 4px);
+  }
 
-.brutalist-shadow-sm {
-  box-shadow: 4px 4px 0px 0px #1a1a1a;
-}
+  .brutalist-shadow-sm-hover {
+    transition: all 0.2s ease;
+  }
 
-.brutalist-shadow-hover-sm:hover {
-  box-shadow: 0px 0px 0px 0px #1a1a1a;
-  transform: translate(4px, 4px);
-}
+  .brutalist-shadow-sm-hover:hover {
+    box-shadow: 0px 0px 0px 0px #000000;
+    transform: translate(4px, 4px);
+  }
+  
+  .brutalist-button {
+    border: 4px solid #000000;
+    text-transform: uppercase;
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    transition: all 0.2s ease;
+  }
+  
+  .brutalist-button:hover {
+    background-color: #000000;
+    color: #ffffff;
+  }
 
-.brutalist-grid-container {
-  border: 4px solid #1a1a1a;
-  background-color: #1a1a1a;
-  gap: 4px;
-}
+  /* Offset Shadow Variants */
+  .offset-shadow {
+    box-shadow: 6px 6px 0px 0px #000000;
+  }
+  .offset-shadow-hover {
+    transition: all 0.2s ease;
+  }
+  .offset-shadow-hover:hover {
+    box-shadow: 2px 2px 0px 0px #000000;
+    transform: translate(4px, 4px);
+  }
 
-.brutalist-grid-item {
-  background-color: #f5f0e8;
-}
-
-/* Material Symbols classes */
-.material-symbols-outlined {
-  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-  vertical-align: middle;
-}
-.material-symbols-outlined.fill {
-  font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  /* Grid lines */
+  .brutalist-grid-container {
+    border: 4px solid #000000;
+    background-color: #000000;
+    gap: 4px;
+  }
+  .brutalist-grid-item {
+    background-color: #f5f0e8;
+  }
 }
