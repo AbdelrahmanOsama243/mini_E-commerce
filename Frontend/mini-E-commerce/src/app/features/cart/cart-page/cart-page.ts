@@ -1,0 +1,217 @@
+import { Component, inject, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { CartService } from '../../../core/services/cart.service';
+import { ToastService } from '../../../shared/toast/toast.service';
+import { LoadingSpinnerComponent } from '../../../shared/loading-spinner/loading-spinner';
+import { CartItem } from '../../../models/cart.model';
+
+@Component({
+  selector: 'app-cart-page',
+  standalone: true,
+  imports: [CommonModule, RouterLink, LoadingSpinnerComponent],
+  template: `
+    <app-loading-spinner [visible]="loading()"></app-loading-spinner>
+    
+    <main class="flex-grow container mx-auto px-6 py-12 max-w-6xl flex flex-col lg:flex-row gap-12 items-start">
+      <!-- Cart Items List (Left/Main Column) -->
+      <section class="w-full lg:w-2/3 flex flex-col">
+        <h1 class="font-headline text-5xl md:text-6xl font-black uppercase tracking-tighter mb-8 border-b-4 border-primary pb-4">
+          Your Cart
+        </h1>
+
+        <!-- Empty Cart State -->
+        @if (!loading() && (!cart() || cart()?.items?.length === 0)) {
+          <div class="bg-surface-container brutalist-border p-12 text-center brutalist-shadow">
+            <span class="material-symbols-outlined text-6xl text-primary/45 mb-4">shopping_basket</span>
+            <h3 class="font-headline font-black text-2xl uppercase mb-2">Your cart is empty</h3>
+            <p class="font-body text-on-surface-variant max-w-md mx-auto mb-6">
+              Looks like you haven't added anything to your cart yet. Explore our designer spaces and find something raw.
+            </p>
+            <a routerLink="/products" class="px-8 py-3 bg-primary text-on-primary font-headline font-black uppercase brutalist-shadow brutalist-shadow-hover inline-block">
+              Start Shopping
+            </a>
+          </div>
+        }
+
+        <!-- Brutalist Grid for Items -->
+        @if (cart() && cart()!.items.length > 0) {
+          <div class="brutalist-grid-container flex flex-col mb-8">
+            @for (item of cart()!.items; track item._id) {
+              @if (item.productId) {
+                <article class="brutalist-grid-item p-4 md:p-6 flex flex-col sm:flex-row gap-6 relative">
+                  <!-- Remove Button -->
+                  <button 
+                    (click)="removeItem(item._id!)" 
+                    aria-label="Remove item" 
+                    class="absolute top-4 right-4 text-primary hover:text-secondary p-1 border-2 border-transparent hover:border-primary transition-all z-10 flex items-center justify-center"
+                  >
+                    <span class="material-symbols-outlined font-bold text-xl">close</span>
+                  </button>
+
+                  <!-- Product Image -->
+                  <div class="w-full sm:w-36 aspect-square border-4 border-primary overflow-hidden shrink-0 brutalist-shadow-sm bg-surface-container-high relative group">
+                    <img 
+                      [src]="item.productId.image || 'https://picsum.photos/seed/product/600/600'" 
+                      [alt]="item.productId.name" 
+                      class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                  </div>
+
+                  <!-- Product Details -->
+                  <div class="flex-grow flex flex-col justify-between">
+                    <div>
+                      <span class="font-label uppercase tracking-widest text-xs font-bold text-secondary mb-1 block">
+                        {{ item.productId.category }}
+                      </span>
+                      <h2 class="font-headline text-2xl font-black uppercase leading-none mb-2 pr-8">
+                        {{ item.productId.name }}
+                      </h2>
+                      <p class="font-body text-on-surface-variant text-sm mb-4 max-w-md line-clamp-2">
+                        {{ item.productId.description }}
+                      </p>
+                    </div>
+
+                    <!-- Price & Quantity Adjuster -->
+                    <div class="flex flex-wrap items-end justify-between gap-4 mt-auto">
+                      <div class="font-headline text-2xl font-black tracking-tighter">
+                        \${{ item.productId.price }}
+                      </div>
+                      
+                      <!-- Quantity Controls -->
+                      <div class="flex border-4 border-primary h-12 bg-white brutalist-shadow-sm">
+                        <button 
+                          (click)="updateQty(item._id!, item.quantity - 1, item.productId.stock)" 
+                          [disabled]="item.quantity <= 1"
+                          aria-label="Decrease quantity" 
+                          class="w-10 h-full flex items-center justify-center hover:bg-primary-container border-r-4 border-primary font-bold text-xl transition-colors disabled:opacity-50"
+                        >
+                          <span class="material-symbols-outlined">remove</span>
+                        </button>
+                        <div class="w-12 h-full flex items-center justify-center font-headline font-black text-lg">
+                          {{ item.quantity }}
+                        </div>
+                        <button 
+                          (click)="updateQty(item._id!, item.quantity + 1, item.productId.stock)" 
+                          [disabled]="item.quantity >= item.productId.stock"
+                          aria-label="Increase quantity" 
+                          class="w-10 h-full flex items-center justify-center hover:bg-primary-container border-l-4 border-primary font-bold text-xl transition-colors disabled:opacity-50"
+                        >
+                          <span class="material-symbols-outlined">add</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </article>
+              }
+            }
+          </div>
+
+          <!-- Clear Cart button -->
+          <button 
+            (click)="clearCart()"
+            class="self-start py-2 px-4 bg-transparent border-2 border-primary font-headline uppercase font-bold text-xs hover:bg-secondary hover:text-on-primary transition-colors brutalist-shadow-sm brutalist-shadow-hover-sm mb-8"
+          >
+            Clear Cart
+          </button>
+        }
+      </section>
+
+      <!-- Order Summary Card (Right Column) -->
+      @if (cart() && cart()!.items.length > 0) {
+        <aside class="w-full lg:w-80 flex-shrink-0">
+          <div class="bg-surface-container-high border-4 border-primary p-6 brutalist-shadow flex flex-col gap-6">
+            <h3 class="font-headline font-black text-2xl uppercase border-b-2 border-primary pb-2">
+              Summary
+            </h3>
+
+            <div class="flex flex-col gap-3 font-headline font-bold text-sm">
+              <div class="flex justify-between">
+                <span class="uppercase opacity-70">Subtotal</span>
+                <span>\${{ subtotal() }}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="uppercase opacity-70">Shipping</span>
+                <span>\${{ shipping() }}</span>
+              </div>
+              <div class="border-t-2 border-primary pt-3 flex justify-between text-lg font-black">
+                <span class="uppercase">Total</span>
+                <span>\${{ total() }}</span>
+              </div>
+            </div>
+
+            <a 
+              routerLink="/checkout"
+              class="w-full py-4 text-center bg-primary text-on-primary text-xl brutalist-button brutalist-shadow brutalist-shadow-hover inline-block"
+            >
+              Checkout
+            </a>
+          </div>
+        </aside>
+      }
+    </main>
+  `
+})
+export class CartComponent {
+  private cartService = inject(CartService);
+  private toastService = inject(ToastService);
+
+  public cart = toSignal(this.cartService.cart$, { initialValue: null });
+  public loading = signal(false);
+
+  subtotal(): number {
+    const currentCart = this.cartService.currentCartValue;
+    if (!currentCart || !currentCart.items) return 0;
+    return currentCart.items.reduce((sum, item) => {
+      return sum + (item.productId ? item.productId.price * item.quantity : 0);
+    }, 0);
+  }
+
+  shipping(): number {
+    // Flat shipping fee of $10, free above $150
+    return this.subtotal() > 150 ? 0 : 10;
+  }
+
+  total(): number {
+    return this.subtotal() + this.shipping();
+  }
+
+  updateQty(itemId: string, qty: number, stock: number) {
+    if (qty <= 0) return;
+    if (qty > stock) {
+      this.toastService.showError(`Only ${stock} items left in stock.`);
+      return;
+    }
+
+    this.loading.set(true);
+    this.cartService.updateQuantity(itemId, qty).subscribe({
+      next: () => this.loading.set(false),
+      error: () => this.loading.set(false)
+    });
+  }
+
+  removeItem(itemId: string) {
+    this.loading.set(true);
+    this.cartService.removeItem(itemId).subscribe({
+      next: () => {
+        this.loading.set(false);
+        this.toastService.showSuccess('Item removed from cart.');
+      },
+      error: () => this.loading.set(false)
+    });
+  }
+
+  clearCart() {
+    if (confirm('Are you sure you want to clear your cart?')) {
+      this.loading.set(true);
+      this.cartService.clearCart().subscribe({
+        next: () => {
+          this.loading.set(false);
+          this.toastService.showSuccess('Cart cleared.');
+        },
+        error: () => this.loading.set(false)
+      });
+    }
+  }
+}

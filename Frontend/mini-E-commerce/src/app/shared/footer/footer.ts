@@ -1,0 +1,23 @@
+import { Component } from '@angular/core';
+
+@Component({
+  selector: 'app-footer',
+  standalone: true,
+  template: `
+    <footer class="bg-primary text-on-primary font-label uppercase tracking-widest text-xs w-full border-t-4 border-primary flex flex-col md:flex-row justify-between items-center px-8 py-12 mt-auto">
+      <div class="mb-6 md:mb-0">
+        <span class="text-on-primary font-black text-lg font-headline">MiniStore</span>
+      </div>
+      <div class="flex flex-wrap justify-center gap-6 md:gap-8 mb-6 md:mb-0">
+        <a class="text-on-primary opacity-80 hover:text-secondary hover:underline transition-all duration-200" href="#">Privacy Policy</a>
+        <a class="text-on-primary opacity-80 hover:text-secondary hover:underline transition-all duration-200" href="#">Terms of Service</a>
+        <a class="text-on-primary opacity-80 hover:text-secondary hover:underline transition-all duration-200" href="#">Contact</a>
+        <a class="text-on-primary opacity-80 hover:text-secondary hover:underline transition-all duration-200" href="#">Shipping</a>
+      </div>
+      <div>
+        <span class="opacity-60 text-[10px] tracking-widest font-bold">©2026 MINISTORE. FORM FOLLOWS FUNCTION.</span>
+      </div>
+    </footer>
+  `
+})
+export class FooterComponent {}

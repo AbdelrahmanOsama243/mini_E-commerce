@@ -108,6 +108,26 @@ const logout = async (req, res) => {
   }
 };
 
+const refresh = async (req, res) => {
+  try {
+    const { refreshToken } = req.body;
+    
+    if (!refreshToken) {
+      return res.status(400).json({ message: 'Refresh token is required' });
+    }
+
+    const { accessToken, refreshToken: newRefreshToken } = await jwtServices.refreshTokens(refreshToken);
+
+    res.status(200).json({
+      accessToken,
+      refreshToken: newRefreshToken
+    });
+  } catch (error) {
+    const statusCode = error.statusCode || 401;
+    res.status(statusCode).json({ message: error.message });
+  }
+};
+
 const getMe = async (req, res) => {
   try {
     if (!req.user) {
@@ -178,6 +198,7 @@ module.exports = {
   register,
   login,
   logout,
+  refresh,
   getMe,
   updateUserProfile,
 };
