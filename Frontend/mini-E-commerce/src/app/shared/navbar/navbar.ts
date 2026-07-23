@@ -1,9 +1,7 @@
-import { Component, inject, signal, HostListener, ElementRef } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { Component, inject, signal, HostListener } from '@angular/core';
+import { Router } from '@angular/router';
 import { AuthService } from '../../core/Services/auth-service';
 import { CartService } from '../../core/Services/cart-service';
-
 @Component({
   selector: 'app-navbar',
   standalone: false,
