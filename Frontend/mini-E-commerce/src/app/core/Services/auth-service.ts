@@ -21,7 +21,7 @@ export class AuthService {
 
   private readonly apiUrl = `${environment.apiUrl}/users`;
 
-  private readonly TOKEN_KEY          = 'token';
+  private readonly TOKEN_KEY          = 'accessToken';
   private readonly REFRESH_TOKEN_KEY  = 'refreshToken';
   private readonly USER_KEY           = 'user';
 
