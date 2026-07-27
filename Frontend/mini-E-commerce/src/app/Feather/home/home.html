@@ -25,7 +25,7 @@
 <!-- Categories Grid -->
 <section class="container mx-auto px-6 py-16">
   <h2 class="font-headline font-black text-4xl uppercase mb-10 border-b-4 border-primary pb-4 inline-block">Categories</h2>
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+  <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
     <!-- Category 1: Decor -->
     <div 
       (click)="selectCategory('decor')"
@@ -60,6 +60,78 @@
     >
       <div class="absolute inset-0 bg-primary transform -translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-in-out"></div>
       <h3 class="relative z-10 font-headline font-black text-3xl uppercase text-primary group-hover:text-on-primary transition-colors">Dining</h3>
+    </div>
+
+    <!-- Category 5: Furniture -->
+    <div 
+      (click)="selectCategory('furniture')"
+      class="group cursor-pointer relative overflow-hidden border-4 border-primary h-80 flex items-center justify-center bg-surface-container brutalist-shadow transition-transform hover:-translate-y-1"
+    >
+      <div class="absolute inset-0 bg-primary-container transform -translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-in-out"></div>
+      <h3 class="relative z-10 font-headline font-black text-3xl uppercase text-primary group-hover:text-primary transition-colors">Furniture</h3>
+    </div>
+
+    <!-- Category 6: Kitchen -->
+    <div 
+      (click)="selectCategory('kitchen')"
+      class="group cursor-pointer relative overflow-hidden border-4 border-primary h-80 flex items-center justify-center bg-surface-container brutalist-shadow transition-transform hover:-translate-y-1"
+    >
+      <div class="absolute inset-0 bg-tertiary transform -translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-in-out"></div>
+      <h3 class="relative z-10 font-headline font-black text-3xl uppercase text-primary group-hover:text-on-primary transition-colors">Kitchen</h3>
+    </div>
+
+    <!-- Category 7: Storage -->
+    <div 
+      (click)="selectCategory('storage')"
+      class="group cursor-pointer relative overflow-hidden border-4 border-primary h-80 flex items-center justify-center bg-surface-container brutalist-shadow transition-transform hover:-translate-y-1"
+    >
+      <div class="absolute inset-0 bg-secondary transform -translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-in-out"></div>
+      <h3 class="relative z-10 font-headline font-black text-3xl uppercase text-primary group-hover:text-on-primary transition-colors">Storage</h3>
+    </div>
+
+    <!-- Category 8: Bath -->
+    <div 
+      (click)="selectCategory('bath')"
+      class="group cursor-pointer relative overflow-hidden border-4 border-primary h-80 flex items-center justify-center bg-surface-container brutalist-shadow transition-transform hover:-translate-y-1"
+    >
+      <div class="absolute inset-0 bg-primary transform -translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-in-out"></div>
+      <h3 class="relative z-10 font-headline font-black text-3xl uppercase text-primary group-hover:text-on-primary transition-colors">Bath</h3>
+    </div>
+
+    <!-- Category 9: Textiles -->
+    <div 
+      (click)="selectCategory('textiles')"
+      class="group cursor-pointer relative overflow-hidden border-4 border-primary h-80 flex items-center justify-center bg-surface-container brutalist-shadow transition-transform hover:-translate-y-1"
+    >
+      <div class="absolute inset-0 bg-primary-container transform -translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-in-out"></div>
+      <h3 class="relative z-10 font-headline font-black text-3xl uppercase text-primary group-hover:text-primary transition-colors">Textiles</h3>
+    </div>
+
+    <!-- Category 10: Accessories -->
+    <div 
+      (click)="selectCategory('accessories')"
+      class="group cursor-pointer relative overflow-hidden border-4 border-primary h-80 flex items-center justify-center bg-surface-container brutalist-shadow transition-transform hover:-translate-y-1"
+    >
+      <div class="absolute inset-0 bg-tertiary transform -translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-in-out"></div>
+      <h3 class="relative z-10 font-headline font-black text-3xl uppercase text-primary group-hover:text-on-primary transition-colors">Accessories</h3>
+    </div>
+
+    <!-- Category 11: Gaming -->
+    <div 
+      (click)="selectCategory('gaming')"
+      class="group cursor-pointer relative overflow-hidden border-4 border-primary h-80 flex items-center justify-center bg-surface-container brutalist-shadow transition-transform hover:-translate-y-1"
+    >
+      <div class="absolute inset-0 bg-secondary transform -translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-in-out"></div>
+      <h3 class="relative z-10 font-headline font-black text-3xl uppercase text-primary group-hover:text-on-primary transition-colors">Gaming</h3>
+    </div>
+
+    <!-- Category 12: Electronics -->
+    <div 
+      (click)="selectCategory('electronics')"
+      class="group cursor-pointer relative overflow-hidden border-4 border-primary h-80 flex items-center justify-center bg-surface-container brutalist-shadow transition-transform hover:-translate-y-1"
+    >
+      <div class="absolute inset-0 bg-primary transform -translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-in-out"></div>
+      <h3 class="relative z-10 font-headline font-black text-3xl uppercase text-primary group-hover:text-on-primary transition-colors">Electronics</h3>
     </div>
   </div>
 </section>

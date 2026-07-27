@@ -14,10 +14,11 @@ const getCart = [
       return next(new ApiError(400, 'User ID is required'));
     }
 
-    const cart = await CartRepo.getCartByUserId(userId);
+    let cart = await CartRepo.getCartByUserId(userId);
 
     if (!cart) {
-      return next(new ApiError(404, 'Cart not found'));
+      await CartRepo.createCart(userId);
+      cart = await CartRepo.getCartByUserId(userId);
     }
 
     return sendSuccess(res, cart);
@@ -95,9 +96,9 @@ const updateCartItemQuantity = [
       return next(new ApiError(400, 'Quantity must be greater than 0'));
     }
 
-    const existingCart = await CartRepo.getCartDocumentByUserId(userId);
+    let existingCart = await CartRepo.getCartDocumentByUserId(userId);
     if (!existingCart) {
-      return next(new ApiError(404, 'Cart not found'));
+      existingCart = await CartRepo.createCart(userId);
     }
 
     const item = existingCart.items.find(i => i._id.toString() === itemId);
@@ -132,9 +133,9 @@ const removeItemFromCart = [
     const { itemId } = req.params;
     const userId = req.user?.id;
 
-    const existingCart = await CartRepo.getCartDocumentByUserId(userId);
+    let existingCart = await CartRepo.getCartDocumentByUserId(userId);
     if (!existingCart) {
-      return next(new ApiError(404, 'Cart not found'));
+      existingCart = await CartRepo.createCart(userId);
     }
 
     const itemExists = existingCart.items.some(i => i._id.toString() === itemId);
@@ -160,9 +161,9 @@ const clearCart = [
   asyncHandler(async (req, res, next) => {
     const userId = req.user?.id;
 
-    const existingCart = await CartRepo.getCartDocumentByUserId(userId);
+    let existingCart = await CartRepo.getCartDocumentByUserId(userId);
     if (!existingCart) {
-      return next(new ApiError(404, 'Cart not found'));
+      existingCart = await CartRepo.createCart(userId);
     }
 
     const cart = await CartRepo.updateCart(existingCart._id, []);

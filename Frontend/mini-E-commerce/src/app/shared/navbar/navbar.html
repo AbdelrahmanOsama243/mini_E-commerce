@@ -68,8 +68,64 @@
               routerLink="/products"
               [queryParams]="{ category: 'dining' }"
               (click)="categoryMenuOpen.set(false)"
-              class="px-4 py-3 hover:bg-primary hover:text-on-primary transition-colors"
+              class="px-4 py-3 hover:bg-primary hover:text-on-primary transition-colors border-b-2 border-primary/20"
               >Dining</a
+            >
+            <a
+              routerLink="/products"
+              [queryParams]="{ category: 'furniture' }"
+              (click)="categoryMenuOpen.set(false)"
+              class="px-4 py-3 hover:bg-primary hover:text-on-primary transition-colors border-b-2 border-primary/20"
+              >Furniture</a
+            >
+            <a
+              routerLink="/products"
+              [queryParams]="{ category: 'kitchen' }"
+              (click)="categoryMenuOpen.set(false)"
+              class="px-4 py-3 hover:bg-primary hover:text-on-primary transition-colors border-b-2 border-primary/20"
+              >Kitchen</a
+            >
+            <a
+              routerLink="/products"
+              [queryParams]="{ category: 'storage' }"
+              (click)="categoryMenuOpen.set(false)"
+              class="px-4 py-3 hover:bg-primary hover:text-on-primary transition-colors border-b-2 border-primary/20"
+              >Storage</a
+            >
+            <a
+              routerLink="/products"
+              [queryParams]="{ category: 'bath' }"
+              (click)="categoryMenuOpen.set(false)"
+              class="px-4 py-3 hover:bg-primary hover:text-on-primary transition-colors border-b-2 border-primary/20"
+              >Bath</a
+            >
+            <a
+              routerLink="/products"
+              [queryParams]="{ category: 'textiles' }"
+              (click)="categoryMenuOpen.set(false)"
+              class="px-4 py-3 hover:bg-primary hover:text-on-primary transition-colors border-b-2 border-primary/20"
+              >Textiles</a
+            >
+            <a
+              routerLink="/products"
+              [queryParams]="{ category: 'accessories' }"
+              (click)="categoryMenuOpen.set(false)"
+              class="px-4 py-3 hover:bg-primary hover:text-on-primary transition-colors border-b-2 border-primary/20"
+              >Accessories</a
+            >
+            <a
+              routerLink="/products"
+              [queryParams]="{ category: 'gaming' }"
+              (click)="categoryMenuOpen.set(false)"
+              class="px-4 py-3 hover:bg-primary hover:text-on-primary transition-colors border-b-2 border-primary/20"
+              >Gaming</a
+            >
+            <a
+              routerLink="/products"
+              [queryParams]="{ category: 'electronics' }"
+              (click)="categoryMenuOpen.set(false)"
+              class="px-4 py-3 hover:bg-primary hover:text-on-primary transition-colors"
+              >Electronics</a
             >
           </div>
         }
@@ -250,6 +306,62 @@
           (click)="toggleMobileMenu()"
           class="hover:bg-primary hover:text-on-primary transition-colors px-2 py-2"
           >Dining</a
+        >
+        <a
+          routerLink="/products"
+          [queryParams]="{ category: 'furniture' }"
+          (click)="toggleMobileMenu()"
+          class="hover:bg-primary hover:text-on-primary transition-colors px-2 py-2"
+          >Furniture</a
+        >
+        <a
+          routerLink="/products"
+          [queryParams]="{ category: 'kitchen' }"
+          (click)="toggleMobileMenu()"
+          class="hover:bg-primary hover:text-on-primary transition-colors px-2 py-2"
+          >Kitchen</a
+        >
+        <a
+          routerLink="/products"
+          [queryParams]="{ category: 'storage' }"
+          (click)="toggleMobileMenu()"
+          class="hover:bg-primary hover:text-on-primary transition-colors px-2 py-2"
+          >Storage</a
+        >
+        <a
+          routerLink="/products"
+          [queryParams]="{ category: 'bath' }"
+          (click)="toggleMobileMenu()"
+          class="hover:bg-primary hover:text-on-primary transition-colors px-2 py-2"
+          >Bath</a
+        >
+        <a
+          routerLink="/products"
+          [queryParams]="{ category: 'textiles' }"
+          (click)="toggleMobileMenu()"
+          class="hover:bg-primary hover:text-on-primary transition-colors px-2 py-2"
+          >Textiles</a
+        >
+        <a
+          routerLink="/products"
+          [queryParams]="{ category: 'accessories' }"
+          (click)="toggleMobileMenu()"
+          class="hover:bg-primary hover:text-on-primary transition-colors px-2 py-2"
+          >Accessories</a
+        >
+        <a
+          routerLink="/products"
+          [queryParams]="{ category: 'gaming' }"
+          (click)="toggleMobileMenu()"
+          class="hover:bg-primary hover:text-on-primary transition-colors px-2 py-2"
+          >Gaming</a
+        >
+        <a
+          routerLink="/products"
+          [queryParams]="{ category: 'electronics' }"
+          (click)="toggleMobileMenu()"
+          class="hover:bg-primary hover:text-on-primary transition-colors px-2 py-2"
+          >Electronics</a
         >
       </div>
     }

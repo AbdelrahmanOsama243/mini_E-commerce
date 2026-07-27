@@ -47,8 +47,8 @@ const initiate = async () => {
     
     // Start server
     app.listen(PORT, () => {
-      console.log(`Server is running on port ${PORT}`);
-      console.log(`http://127.0.0.1:${process.env.PORT}`);
+      console.log(`Server is running on port ${PORT||3000}`);
+      console.log(`http://127.0.0.1:${process.env.PORT||3000}`);
     });
   } catch (error) {
     console.error("Failed to initiate server:", error);

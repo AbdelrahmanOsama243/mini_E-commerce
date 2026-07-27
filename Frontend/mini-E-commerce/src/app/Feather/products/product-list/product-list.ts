@@ -23,7 +23,15 @@ export class ProductListComponent implements OnInit, AfterViewInit, OnDestroy {
     { id: 'decor', name: 'Decor' },
     { id: 'bedding', name: 'Bedding' },
     { id: 'lighting', name: 'Lighting' },
-    { id: 'dining', name: 'Dining' }
+    { id: 'dining', name: 'Dining' },
+    { id: 'furniture', name: 'Furniture' },
+    { id: 'kitchen', name: 'Kitchen' },
+    { id: 'storage', name: 'Storage' },
+    { id: 'bath', name: 'Bath' },
+    { id: 'textiles', name: 'Textiles' },
+    { id: 'accessories', name: 'Accessories' },
+    { id: 'gaming', name: 'Gaming' },
+    { id: 'electronics', name: 'Electronics' }
   ];
   
 
