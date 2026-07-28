@@ -58,3 +58,4 @@ const initiate = async () => {
 
 initiate();
 
+module.exports = app;
