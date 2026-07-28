@@ -66,7 +66,7 @@ const products = [
     price: 120,
     category: "decor",
     stock: 50,
-    image: "https://picsum.photos/seed/vase/600/600"
+    image: "https://images.unsplash.com/photo-1581783342308-f792dbdd27c5?w=600&q=80"
   },
   {
     name: "Concrete Bookend",
@@ -90,7 +90,7 @@ const products = [
     price: 55,
     category: "decor",
     stock: 80,
-    image: "https://picsum.photos/seed/plantpot/600/600"
+    image: "https://images.unsplash.com/photo-1485955900006-10f4d324d411?w=600&q=80"
   },
   {
     name: "Minimalist Wall Clock",
@@ -98,7 +98,7 @@ const products = [
     price: 95,
     category: "decor",
     stock: 60,
-    image: "https://picsum.photos/seed/wallclock/600/600"
+    image: "https://images.unsplash.com/photo-1563861826100-9cb868fdbe1c?w=600&q=80"
   },
 
   // 2. lighting
@@ -108,7 +108,7 @@ const products = [
     price: 85,
     category: "lighting",
     stock: 120,
-    image: "https://picsum.photos/seed/lamp/600/600"
+    image: "https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=600&q=80"
   },
   {
     name: "Brass Pendant Light",
@@ -124,7 +124,7 @@ const products = [
     price: 310,
     category: "lighting",
     stock: 15,
-    image: "https://picsum.photos/seed/floorlamp/600/600"
+    image: "https://images.unsplash.com/photo-1513506003901-1e6a229e2d15?w=600&q=80"
   },
   {
     name: "Opal Glass Sconce",
@@ -132,7 +132,7 @@ const products = [
     price: 130,
     category: "lighting",
     stock: 40,
-    image: "https://picsum.photos/seed/sconce/600/600"
+    image: "https://images.unsplash.com/photo-1540932239986-30128078f3c5?w=600&q=80"
   },
   {
     name: "LED Desk Lamp",
@@ -140,7 +140,7 @@ const products = [
     price: 75,
     category: "lighting",
     stock: 90,
-    image: "https://picsum.photos/seed/desklamp/600/600"
+    image: "https://images.unsplash.com/photo-1534073828943-f801091bb18c?w=600&q=80"
   },
 
   // 3. bedding
@@ -166,7 +166,7 @@ const products = [
     price: 85,
     category: "bedding",
     stock: 70,
-    image: "https://picsum.photos/seed/pillowcase/600/600"
+    image: "https://images.unsplash.com/photo-1584100936595-c0654b55a2e2?w=600&q=80"
   },
   {
     name: "Weighted Blanket",
@@ -174,7 +174,7 @@ const products = [
     price: 180,
     category: "bedding",
     stock: 20,
-    image: "https://picsum.photos/seed/weighted/600/600"
+    image: "https://images.unsplash.com/photo-1578898887932-dce23a595ad4?w=600&q=80"
   },
   {
     name: "Bamboo Fitted Sheet",
@@ -182,7 +182,7 @@ const products = [
     price: 110,
     category: "bedding",
     stock: 50,
-    image: "https://picsum.photos/seed/sheet/600/600"
+    image: "https://images.unsplash.com/photo-1616627547584-bf28cee262db?w=600&q=80"
   },
 
   // 4. dining
@@ -216,7 +216,7 @@ const products = [
     price: 95,
     category: "dining",
     stock: 65,
-    image: "https://picsum.photos/seed/cutlery/600/600"
+    image: "https://images.unsplash.com/photo-1584269600464-37b1b58a9fe7?w=600&q=80"
   },
   {
     name: "Marble Serving Tray",
@@ -224,7 +224,7 @@ const products = [
     price: 70,
     category: "dining",
     stock: 45,
-    image: "https://picsum.photos/seed/servingtray/600/600"
+    image: "https://images.unsplash.com/photo-1615800098779-1be32e60cca3?w=600&q=80"
   },
 
   // 5. furniture
@@ -234,7 +234,7 @@ const products = [
     price: 450,
     category: "furniture",
     stock: 12,
-    image: "https://picsum.photos/seed/loungechair/600/600"
+    image: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=600&q=80"
   },
   {
     name: "Minimalist Coffee Table",
@@ -242,7 +242,7 @@ const products = [
     price: 280,
     category: "furniture",
     stock: 18,
-    image: "https://picsum.photos/seed/coffeetable/600/600"
+    image: "https://images.unsplash.com/photo-1533090481720-856c6e3c1fdc?w=600&q=80"
   },
   {
     name: "Solid Wood Bookshelf",
@@ -250,7 +250,7 @@ const products = [
     price: 520,
     category: "furniture",
     stock: 8,
-    image: "https://picsum.photos/seed/bookshelf/600/600"
+    image: "https://images.unsplash.com/photo-1594683515159-8ff7a18bb1fc?w=600&q=80"
   },
   {
     name: "Ergonomic Office Chair",
@@ -258,7 +258,7 @@ const products = [
     price: 350,
     category: "furniture",
     stock: 25,
-    image: "https://picsum.photos/seed/officechair/600/600"
+    image: "https://images.unsplash.com/photo-1580481077494-e3299ac2fef6?w=600&q=80"
   },
   {
     name: "Modern Sideboard",
@@ -266,7 +266,7 @@ const products = [
     price: 650,
     category: "furniture",
     stock: 6,
-    image: "https://picsum.photos/seed/sideboard/600/600"
+    image: "https://images.unsplash.com/photo-1595428774223-ef52624120d2?w=600&q=80"
   },
 
   // 6. kitchen
@@ -276,7 +276,7 @@ const products = [
     price: 90,
     category: "kitchen",
     stock: 55,
-    image: "https://picsum.photos/seed/skillet/600/600"
+    image: "https://images.unsplash.com/photo-1588854337236-6889d631faa8?w=600&q=80"
   },
   {
     name: "Chef Knife Set",
@@ -284,7 +284,7 @@ const products = [
     price: 160,
     category: "kitchen",
     stock: 40,
-    image: "https://picsum.photos/seed/knifeset/600/600"
+    image: "https://images.unsplash.com/photo-1593618998160-e34014e67546?w=600&q=80"
   },
   {
     name: "Acacia Wood Cutting Board",
@@ -292,7 +292,7 @@ const products = [
     price: 50,
     category: "kitchen",
     stock: 110,
-    image: "https://picsum.photos/seed/cuttingboard/600/600"
+    image: "https://images.unsplash.com/photo-1594998893017-361470bd9dcf?w=600&q=80"
   },
   {
     name: "Espresso Maker",
@@ -300,7 +300,7 @@ const products = [
     price: 420,
     category: "kitchen",
     stock: 15,
-    image: "https://picsum.photos/seed/espresso/600/600"
+    image: "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=600&q=80"
   },
   {
     name: "Ceramic Canister Set",
@@ -308,7 +308,7 @@ const products = [
     price: 65,
     category: "kitchen",
     stock: 85,
-    image: "https://picsum.photos/seed/canister/600/600"
+    image: "https://images.unsplash.com/photo-1584473457406-6240486418e9?w=600&q=80"
   },
 
   // 7. storage
@@ -318,7 +318,7 @@ const products = [
     price: 55,
     category: "storage",
     stock: 95,
-    image: "https://picsum.photos/seed/baskets/600/600"
+    image: "https://images.unsplash.com/photo-1591129841117-3adfd313e34f?w=600&q=80"
   },
   {
     name: "Wire Wall Grid",
@@ -326,7 +326,7 @@ const products = [
     price: 35,
     category: "storage",
     stock: 150,
-    image: "https://picsum.photos/seed/wallgrid/600/600"
+    image: "https://images.unsplash.com/photo-1507842229356-51ce99729218?w=600&q=80"
   },
   {
     name: "Modular Organizers",
@@ -334,7 +334,7 @@ const products = [
     price: 45,
     category: "storage",
     stock: 120,
-    image: "https://picsum.photos/seed/organizers/600/600"
+    image: "https://images.unsplash.com/photo-1595428774223-ef52624120d2?w=600&q=80"
   },
   {
     name: "Under-bed Storage Box",
@@ -342,7 +342,7 @@ const products = [
     price: 60,
     category: "storage",
     stock: 70,
-    image: "https://picsum.photos/seed/storagebox/600/600"
+    image: "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=600&q=80"
   },
   {
     name: "Leather Magazine Holder",
@@ -350,7 +350,7 @@ const products = [
     price: 80,
     category: "storage",
     stock: 40,
-    image: "https://picsum.photos/seed/magazineholder/600/600"
+    image: "https://images.unsplash.com/photo-1544816155-12df9643f363?w=600&q=80"
   },
 
   // 8. bath
@@ -360,7 +360,7 @@ const products = [
     price: 90,
     category: "bath",
     stock: 60,
-    image: "https://picsum.photos/seed/towelset/600/600"
+    image: "https://images.unsplash.com/photo-1561047029-3000c68339ca?w=600&q=80"
   },
   {
     name: "Stone Bath Mat",
@@ -368,7 +368,7 @@ const products = [
     price: 65,
     category: "bath",
     stock: 80,
-    image: "https://picsum.photos/seed/bathmat/600/600"
+    image: "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=600&q=80"
   },
   {
     name: "Glass Dispenser Set",
@@ -376,7 +376,7 @@ const products = [
     price: 40,
     category: "bath",
     stock: 100,
-    image: "https://picsum.photos/seed/dispenser/600/600"
+    image: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=600&q=80"
   },
   {
     name: "Bamboo Bathtub Caddy",
@@ -384,7 +384,7 @@ const products = [
     price: 55,
     category: "bath",
     stock: 50,
-    image: "https://picsum.photos/seed/caddy/600/600"
+    image: "https://images.unsplash.com/photo-1507652313519-d4e9174996dd?w=600&q=80"
   },
   {
     name: "Plush Bathrobe",
@@ -392,7 +392,7 @@ const products = [
     price: 110,
     category: "bath",
     stock: 35,
-    image: "https://picsum.photos/seed/bathrobe/600/600"
+    image: "https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=600&q=80"
   },
 
   // 9. textiles
@@ -402,7 +402,7 @@ const products = [
     price: 380,
     category: "textiles",
     stock: 10,
-    image: "https://picsum.photos/seed/arearug/600/600"
+    image: "https://images.unsplash.com/photo-1600121848594-d8644e57abab?w=600&q=80"
   },
   {
     name: "Velvet Cushion Cover",
@@ -410,7 +410,7 @@ const products = [
     price: 35,
     category: "textiles",
     stock: 140,
-    image: "https://picsum.photos/seed/cushioncover/600/600"
+    image: "https://images.unsplash.com/photo-1584100936595-c0654b55a2e2?w=600&q=80"
   },
   {
     name: "Linen Table Runner",
@@ -418,7 +418,7 @@ const products = [
     price: 45,
     category: "textiles",
     stock: 90,
-    image: "https://picsum.photos/seed/tablerunner/600/600"
+    image: "https://images.unsplash.com/photo-1578496479914-7ef3b0193be3?w=600&q=80"
   },
   {
     name: "Jute Floor Mat",
@@ -426,7 +426,7 @@ const products = [
     price: 75,
     category: "textiles",
     stock: 45,
-    image: "https://picsum.photos/seed/jutemat/600/600"
+    image: "https://images.unsplash.com/photo-1579656381226-5fc0f0100c3b?w=600&q=80"
   },
   {
     name: "Cotton Blackout Curtains",
@@ -434,7 +434,7 @@ const products = [
     price: 130,
     category: "textiles",
     stock: 30,
-    image: "https://picsum.photos/seed/curtains/600/600"
+    image: "https://images.unsplash.com/photo-1513694203232-719a280e022f?w=600&q=80"
   },
 
   // 10. accessories
@@ -444,7 +444,7 @@ const products = [
     price: 45,
     category: "accessories",
     stock: 110,
-    image: "https://picsum.photos/seed/candleholder/600/600"
+    image: "https://images.unsplash.com/photo-1603006905003-be475563bc59?w=600&q=80"
   },
   {
     name: "Ceramic Incense Burner",
@@ -452,7 +452,7 @@ const products = [
     price: 30,
     category: "accessories",
     stock: 150,
-    image: "https://picsum.photos/seed/incense/600/600"
+    image: "https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?w=600&q=80"
   },
   {
     name: "Decorative Book Box",
@@ -460,7 +460,7 @@ const products = [
     price: 40,
     category: "accessories",
     stock: 85,
-    image: "https://picsum.photos/seed/bookbox/600/600"
+    image: "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=600&q=80"
   },
   {
     name: "Modern Arch Mirror",
@@ -468,7 +468,7 @@ const products = [
     price: 180,
     category: "accessories",
     stock: 20,
-    image: "https://picsum.photos/seed/archmirror/600/600"
+    image: "https://images.unsplash.com/photo-1618220179428-22790b461013?w=600&q=80"
   },
   {
     name: "Sculptural Paperweight",
@@ -476,7 +476,7 @@ const products = [
     price: 25,
     category: "accessories",
     stock: 200,
-    image: "https://picsum.photos/seed/paperweight/600/600"
+    image: "https://images.unsplash.com/photo-1544816155-12df9643f363?w=600&q=80"
   },
 
   // 11. gaming
@@ -486,7 +486,7 @@ const products = [
     price: 140,
     category: "gaming",
     stock: 45,
-    image: "https://picsum.photos/seed/keyboard/600/600"
+    image: "https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=600&q=80"
   },
   {
     name: "Wireless Gaming Mouse",
@@ -494,7 +494,7 @@ const products = [
     price: 80,
     category: "gaming",
     stock: 60,
-    image: "https://picsum.photos/seed/mouse/600/600"
+    image: "https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?w=600&q=80"
   },
   {
     name: "Pro Gaming Headset",
@@ -502,7 +502,7 @@ const products = [
     price: 120,
     category: "gaming",
     stock: 50,
-    image: "https://picsum.photos/seed/headset/600/600"
+    image: "https://images.unsplash.com/photo-1546435770-a3e426bf472b?w=600&q=80"
   },
   {
     name: "Ergonomic Gaming Monitor",
@@ -510,7 +510,7 @@ const products = [
     price: 350,
     category: "gaming",
     stock: 20,
-    image: "https://picsum.photos/seed/monitor/600/600"
+    image: "https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=600&q=80"
   },
   {
     name: "RGB Desk Mouse Pad",
@@ -518,7 +518,7 @@ const products = [
     price: 30,
     category: "gaming",
     stock: 100,
-    image: "https://picsum.photos/seed/mousepad/600/600"
+    image: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600&q=80"
   },
 
   // 12. electronics
@@ -528,7 +528,7 @@ const products = [
     price: 250,
     category: "electronics",
     stock: 35,
-    image: "https://picsum.photos/seed/headphones/600/600"
+    image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&q=80"
   },
   {
     name: "Portable Bluetooth Speaker",
@@ -536,7 +536,7 @@ const products = [
     price: 95,
     category: "electronics",
     stock: 75,
-    image: "https://picsum.photos/seed/speaker/600/600"
+    image: "https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=600&q=80"
   },
   {
     name: "Fast Wireless Charger",
@@ -544,7 +544,7 @@ const products = [
     price: 45,
     category: "electronics",
     stock: 120,
-    image: "https://picsum.photos/seed/charger/600/600"
+    image: "https://images.unsplash.com/photo-1586953208448-b95a79798f07?w=600&q=80"
   },
   {
     name: "4K Streaming Media Player",
@@ -552,7 +552,7 @@ const products = [
     price: 60,
     category: "electronics",
     stock: 90,
-    image: "https://picsum.photos/seed/streamer/600/600"
+    image: "https://images.unsplash.com/photo-1546054454-aa26e2b734c7?w=600&q=80"
   },
   {
     name: "High-Capacity Power Bank",
@@ -560,7 +560,7 @@ const products = [
     price: 50,
     category: "electronics",
     stock: 110,
-    image: "https://picsum.photos/seed/powerbank/600/600"
+    image: "https://images.unsplash.com/photo-1609592424209-27d4c2b8c9d1?w=600&q=80"
   }
 ];
 
@@ -571,84 +571,70 @@ async function seed() {
     await connect();
     console.log("✅ Connected to database\n");
 
-    // Clean existing data
-    await clean();
-    console.log("🗑️  Existing data cleared\n");
 
-    // 1. Seed Users (hash passwords with bcrypt before inserting)
-    const usersWithHashedPasswords = await Promise.all(
-      users.map(async (u) => ({
-        ...u,
-        password: await bcrypt.hash(u.password, 12),
-      }))
-    );
-    const createdUsers = await User.create(usersWithHashedPasswords);
-    console.log(`👤 ${createdUsers.length} users seeded`);
 
-    // 2. Seed Products
-    const createdProducts = await Product.create(products);
-    console.log(`📦 ${createdProducts.length} products seeded`);
-
-    // 3. Seed Carts (give regular users items, and empty carts for admins so every user has a cart)
-    const regularUsers = createdUsers.filter((u) => u.role === "user");
-
-    const carts = createdUsers.map((user, idx) => {
-      if (user.role === "user") {
-        return {
-          userId: user._id,
-          items: [
-            {
-              productId: createdProducts[idx % createdProducts.length]._id,
-              quantity: 2,
-            },
-            {
-              productId: createdProducts[(idx + 1) % createdProducts.length]._id,
-              quantity: 1,
-            },
-          ],
-        };
-      } else {
-        return {
-          userId: user._id,
-          items: [],
-        };
-      }
-    });
-
-    const createdCarts = await Cart.create(carts);
-    console.log(`🛒 ${createdCarts.length} carts seeded`);
-
-    // 4. Seed Orders (create an order for the first two regular users)
-    const orders = regularUsers.slice(0, 2).map((user, idx) => {
-      const orderedProducts = [
-        createdProducts[idx % createdProducts.length],
-        createdProducts[(idx + 2) % createdProducts.length],
-      ];
-      const items = orderedProducts.map((p) => ({
-        productId: p._id,
-        quantity: 1,
-        priceAtPurchase: p.price,
-      }));
-      const totalPrice = items.reduce(
-        (sum, item) => sum + item.priceAtPurchase * item.quantity,
-        0
+    // 1. Seed Users (التحديث أو الإدخال الآمن للمستخدمين)
+    console.log("⏳ Seeding Users...");
+    const upsertedUsers = [];
+    for (const u of users) {
+      // تشفير كلمة المرور
+      const hashedPassword = await bcrypt.hash(u.password, 12);
+      
+      // البحث بالبريد الإلكتروني، وإذا لم يوجد ننشئه، وإذا وجد نحدثه
+      const user = await User.findOneAndUpdate(
+        { email: u.email }, 
+        { $set: { ...u, password: hashedPassword } },
+        { upsert: true, new: true } 
       );
+      upsertedUsers.push(user);
+    }
+    console.log(`👤 ${upsertedUsers.length} users verified and safely upserted`);
 
-      return {
-        userId: user._id,
-        items,
-        totalPrice,
-        status: idx === 0 ? "shipped" : "pending",
-        shippingAddress: `${123 + idx} Example Street, Cairo, Egypt`,
-      };
-    });
+    // 2. Seed Products (التحديث أو الإدخال الآمن للمنتجات)
+    console.log("⏳ Seeding Products...");
+    const upsertedProducts = [];
+    for (const p of products) {
+      // البحث باسم المنتج لضمان عدم التكرار
+      const product = await Product.findOneAndUpdate(
+        { name: p.name },
+        { $set: p },
+        { upsert: true, new: true }
+      );
+      upsertedProducts.push(product);
+    }
+    console.log(`📦 ${upsertedProducts.length} products verified and safely upserted`);
 
-    const createdOrders = await Order.create(orders);
-    console.log(`📋 ${createdOrders.length} orders seeded`);
+    // 3. Seed Carts (إنشاء سلات تسوق آمنة)
+    console.log("⏳ Seeding Carts...");
+    for (let idx = 0; idx < upsertedUsers.length; idx++) {
+      const user = upsertedUsers[idx];
+      let cartItems = [];
+
+      // إضافة منتجات للسلة فقط للمستخدمين العاديين
+      if (user.role === "user") {
+        cartItems = [
+          {
+            productId: upsertedProducts[idx % upsertedProducts.length]._id,
+            quantity: 2,
+          },
+          {
+            productId: upsertedProducts[(idx + 1) % upsertedProducts.length]._id,
+            quantity: 1,
+          },
+        ];
+      }
+
+      await Cart.findOneAndUpdate(
+        { userId: user._id },
+        { $set: { userId: user._id, items: cartItems } },
+        { upsert: true, new: true }
+      );
+    }
+    console.log(`🛒 Carts verified and safely upserted for all users`);
 
     // ─── Summary ─────────────────────────────────────────────
     console.log("\n════════════════════════════════════════");
-    console.log("  🌱 Seeding completed successfully!");
+    console.log("  🌱 Safe Seeding completed successfully!");
     console.log("════════════════════════════════════════");
     console.log("\n📌 Test Credentials:");
     console.log("   Admin  → body55535@gmail.com / Admin@123");

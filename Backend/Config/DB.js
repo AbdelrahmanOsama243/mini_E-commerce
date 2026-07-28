@@ -14,20 +14,9 @@ class Database {
     }
     return this.#instance;
   }
-  async clean() {
-    if (mongoose.connection.readyState !== 1) {
-      throw new Error("Database not connected");
-    }
-    const collections = mongoose.connection.collections;
-    for (const key in collections) {
-      await collections[key].deleteMany({});
-    }
-    console.log("Database cleaned successfully");
-  }
 }
 
 const dbInstance = new Database();
 module.exports = {
   connect: () => dbInstance.connect(),
-  clean: () => dbInstance.clean(),
 };
