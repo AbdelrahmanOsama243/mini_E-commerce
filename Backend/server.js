@@ -3,6 +3,11 @@ const express = require("express");
 const helmet = require("helmet");
 const cors = require("cors");
 const { connect } = require("./Config/DB");
+const { notFound, errorHandler } = require("./Middlewares/error.middleware");
+const { authentication } = require("./Middlewares/auth.middleware");
+const sessionMiddleware = require("./Middlewares/session.middleware");
+
+
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -13,15 +18,14 @@ app.use(helmet());
 // Middleware
 app.use(cors());
 app.use(express.json());
-
-// Import Auth Middleware
-const { authentication } = require("./Middlewares/auth.middleware");
+app.use(sessionMiddleware);
+app.use(authentication);
 
 // Import Routes
-const userRoutes = require("./Routes/user.routes");
-const productRoutes = require("./Routes/product.routes");
-const cartRoutes = require("./Routes/cart.routes");
-const orderRoutes = require("./Routes/order.routes");
+const userRoutes = require("./routes/user.routes");
+const productRoutes = require("./routes/product.routes");
+const cartRoutes = require("./routes/cart.routes");
+const orderRoutes = require("./routes/order.routes");
 
 // Routes
 app.get("/", (req, res) => {
@@ -32,9 +36,6 @@ app.use("/api/users", userRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/orders", orderRoutes);
-
-// Import Error Middleware
-const { notFound, errorHandler } = require("./Middlewares/error.middleware");
 
 // Error Middleware (should be after all routes)
 app.use(notFound);
@@ -47,7 +48,7 @@ const initiate = async () => {
     
     // Start server
     app.listen(PORT, () => {
-      console.log(`Server is running on port ${PORT||3000}`);
+      console.log(`Server is running on port ${PORT||3000} in worker ${process.pid}`);
       console.log(`http://127.0.0.1:${process.env.PORT||3000}`);
     });
   } catch (error) {

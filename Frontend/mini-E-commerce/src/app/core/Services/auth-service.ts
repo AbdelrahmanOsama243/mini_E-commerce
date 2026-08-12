@@ -11,7 +11,8 @@ import {
   LoginResponse,
   LogoutResponse,
   GetMeResponse,
-  UpdateProfileResponse
+  UpdateProfileResponse,
+  User
 } from '../../Models/iauth';
 
 @Injectable({
@@ -21,44 +22,27 @@ export class AuthService {
 
   private readonly apiUrl = `${environment.apiUrl}/users`;
 
-  private readonly TOKEN_KEY          = 'accessToken';
-  private readonly REFRESH_TOKEN_KEY  = 'refreshToken';
-  private readonly USER_KEY           = 'user';
+  private readonly USER_KEY = 'user';
 
   constructor(private http: HttpClient) {}
 
-
-  /** Persist accessToken, refreshToken and user profile after login / register. */
+  /** Persist user profile after login / register. */
   saveSession(response: AuthResponse): void {
-    localStorage.setItem(this.TOKEN_KEY,         response.accessToken);
-    localStorage.setItem(this.REFRESH_TOKEN_KEY, response.refreshToken);
-    localStorage.setItem(this.USER_KEY,          JSON.stringify(response.user));
+    localStorage.setItem(this.USER_KEY, JSON.stringify(response.user));
   }
 
-  /** Remove every auth key from localStorage. */
+  /** Remove auth keys from localStorage. */
   clearSession(): void {
-    localStorage.removeItem(this.TOKEN_KEY);
-    localStorage.removeItem(this.REFRESH_TOKEN_KEY);
     localStorage.removeItem(this.USER_KEY);
   }
 
-  /** Return the stored access token, or null when not logged in. */
-  getToken(): string | null {
-    return localStorage.getItem(this.TOKEN_KEY);
-  }
-
-  /** Return the stored refresh token, or null when not logged in. */
-  getRefreshToken(): string | null {
-    return localStorage.getItem(this.REFRESH_TOKEN_KEY);
-  }
-
-  /** Return true when an access token is present in storage. */
+  /** Return true when a user profile is present in storage. */
   isLoggedIn(): boolean {
-    return this.getToken() !== null;
+    return this.getUser() !== null;
   }
 
   /** Return the stored user profile, or null when not logged in. */
-  getUser(): any | null {
+  getUser(): User | null {
     const userStr = localStorage.getItem(this.USER_KEY);
     if (!userStr) return null;
     try {
@@ -74,39 +58,41 @@ export class AuthService {
     return user !== null && user.role === 'admin';
   }
 
+  /** Return true if the logged in user has verified their email. */
+  isVerified(): boolean {
+    const user = this.getUser();
+    return user !== null && user.isVerified === true;
+  }
+
 
   private getAuthHeaders(): HttpHeaders {
     return new HttpHeaders({
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${this.getToken() ?? ''}`
+      'Content-Type': 'application/json'
     });
   }
 
 
 
-  /** POST /api/users/register → 201 { user, accessToken, refreshToken } */
-  register(payload: RegisterPayload): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${this.apiUrl}/register`, payload).pipe(
-      tap(res => this.saveSession(res))
-    );
+  /** POST /api/users/register → 201 { success, message } */
+  register(payload: RegisterPayload): Observable<{ success: boolean; message: string }> {
+    return this.http.post<{ success: boolean; message: string }>(`${this.apiUrl}/register`, payload);
   }
 
-  /** POST /api/users/login → 200 { user, accessToken, refreshToken } */
-  login(payload: LoginPayload): Observable<LoginResponse> {
-    return this.http.post<LoginResponse>(`${this.apiUrl}/login`, payload).pipe(
-      tap(res => this.saveSession(res))
+  /** POST /api/users/login → 200 { success, message, data: { user, accessToken, refreshToken } } */
+  login(payload: LoginPayload): Observable<{ success: boolean; message: string; data: LoginResponse }> {
+    return this.http.post<{ success: boolean; message: string; data: LoginResponse }>(`${this.apiUrl}/login`, payload).pipe(
+      tap(res => this.saveSession(res.data))
     );
   }
 
   /**
    * POST /api/users/logout → 200 { message }
-   * Sends the stored refreshToken in the body and clears the session on success.
+   * The backend will read the refreshToken from the session.
    */
   logout(): Observable<LogoutResponse> {
-    const payload: LogoutPayload = { refreshToken: this.getRefreshToken() ?? '' };
     return this.http.post<LogoutResponse>(
       `${this.apiUrl}/logout`,
-      payload,
+      {},
       { headers: this.getAuthHeaders() }
     ).pipe(
       tap(() => this.clearSession())
@@ -115,31 +101,42 @@ export class AuthService {
 
   /** POST /api/users/refresh */
   refreshToken(): Observable<any> {
-    const payload = { refreshToken: this.getRefreshToken() ?? '' };
-    return this.http.post<any>(`${this.apiUrl}/refresh`, payload).pipe(
+    return this.http.post<any>(`${this.apiUrl}/refresh`, {}).pipe(
       tap((res: any) => {
-        if (res.accessToken && res.refreshToken) {
-          localStorage.setItem(this.TOKEN_KEY, res.accessToken);
-          localStorage.setItem(this.REFRESH_TOKEN_KEY, res.refreshToken);
-        }
+        // Tokens are managed via cookies, so no local storage updates needed
       })
     );
   }
 
-  /** GET /api/users/me → 200 { _id, name, email, role } */
-  getMe(): Observable<GetMeResponse> {
-    return this.http.get<GetMeResponse>(
+  /** GET /api/users/me → 200 { success, message, data: { _id, name, email, role } } */
+  getMe(): Observable<{ success: boolean; message: string; data: GetMeResponse }> {
+    return this.http.get<{ success: boolean; message: string; data: GetMeResponse }>(
       `${this.apiUrl}/me`,
       { headers: this.getAuthHeaders() }
     );
   }
 
-  /** PUT /api/users/me → 200 { _id, name, email, role } */
-  updateProfile(payload: UpdateProfilePayload): Observable<UpdateProfileResponse> {
-    return this.http.put<UpdateProfileResponse>(
+  /** PUT /api/users/me → 200 { success, message, data: { _id, name, email, role } } */
+  updateProfile(payload: UpdateProfilePayload): Observable<{ success: boolean; message: string; data: UpdateProfileResponse }> {
+    return this.http.put<{ success: boolean; message: string; data: UpdateProfileResponse }>(
       `${this.apiUrl}/me`,
       payload,
       { headers: this.getAuthHeaders() }
     );
+  }
+
+  /** GET /api/users/verify-email/:token */
+  verifyEmail(token: string): Observable<{ message: string }> {
+    return this.http.get<{ message: string }>(`${this.apiUrl}/verify-email/${token}`);
+  }
+
+  /** POST /api/users/forget-password */
+  forgetPassword(email: string): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.apiUrl}/forget-password`, { email });
+  }
+
+  /** POST /api/users/resend-verification */
+  resendVerification(payload: RegisterPayload): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/resend-verification`, payload);
   }
 }

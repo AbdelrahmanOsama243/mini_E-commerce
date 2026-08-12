@@ -1,23 +1,60 @@
-# Mini E-Commerce
+# Mini E-Commerce Platform
 
-This repository contains a full-stack mini e-commerce application. It consists of a backend API built with Node.js and Express, and a frontend built with Angular.
+This repository contains a full-stack e-commerce application. It consists of a robust backend API built with Node.js, Express, MongoDB, and Redis, and a modern single-page frontend built with Angular (v21).
 
-## Features
+## 🌟 Features
 
 ### Backend
-- User authentication with JWT (Access Token + Refresh Token)
-- Role-based access control (Admin, User)
-- User registration and login
-- Cart management
-- Error handling
-- MongoDB integration
+- **Authentication & Authorization**: Secure JWT-based authentication (Access + Refresh tokens). Role-based access control (Admin, User).
+- **Session & Caching Management**: Redis integration for high-performance session management and data caching via a dedicated Repository Layer.
+- **User Management**: Registration, login, email verification, password reset, and profile updates.
+- **E-Commerce Core**: Cart management, order processing, and product catalog APIs.
+- **Architecture**: MVC-like pattern with a clean Repository pattern abstracting database operations.
+- **Security & Error Handling**: Centralized error handling, CORS, and Helmet for secure HTTP headers.
 
 ### Frontend
-- Angular 21 based single page application
-- User-friendly interface for e-commerce interactions
-- Component-based architecture
+- **Modern Angular App**: Built with Angular 21 utilizing standalone components and RxJS for reactive state management.
+- **Type Safety**: Full TypeScript integration with models strictly mirroring backend API responses.
+- **Services & Guards**: Modular services for business logic and route guards for protecting authenticated views.
+- **Clean UI**: Component-based architecture for a scalable and maintainable user interface.
 
-## Installation & Setup
+## 📁 Project Structure
+
+```
+mini_E-commerce
+├── Backend/                 # Node.js & Express API backend
+│   ├── Config/              # Configuration files (DB, env)
+│   ├── Controllers/         # Business logic and request handling
+│   ├── Middlewares/         # Custom middlewares (auth, errors)
+│   ├── Models/              # Mongoose schemas (Users, Products, Cart)
+│   ├── Repos/               # Repository layer (MongoDB & Redis Cache)
+│   ├── Utils/               # Helpers and utilities
+│   └── routes/              # API endpoint definitions
+├── Frontend/                # Angular frontend application
+│   └── mini-E-commerce/
+│       ├── src/             # Angular source code (Components, Services, Models)
+│       └── public/          # Static assets
+└── PROJECT_OVERVIEW.md      # Extended architectural details
+```
+
+## 🛠️ Technologies Used
+
+### Backend Stack
+- Node.js & Express.js
+- MongoDB & Mongoose
+- Redis (connect-redis, redis)
+- JWT (jsonwebtoken) & bcrypt
+- Express-Session, Helmet, CORS
+- Nodemailer
+
+### Frontend Stack
+- Angular (v21)
+- TypeScript
+- RxJS
+- HTML5 / CSS3
+- Vitest (Testing)
+
+## 🚀 Installation & Setup
 
 1. **Clone the repository**
 ```bash
@@ -30,109 +67,48 @@ cd mini_E-commerce
 cd Backend
 npm install
 ```
-Create a `.env` file in the `Backend` directory with the following variables:
+Create a `.env` file in the `Backend` directory:
 ```env
 PORT=3000
-MONGO_URI=your db link from mongodb compass
+MONGO_URI=# Or your MongoDB Atlas URI
+REDIS_URL=# Your Redis connection string
 JWT_SECRET=your_jwt_secret
-JWT_REFRESH_SECRET=your_refresh_secret 
+JWT_REFRESH_SECRET=your_refresh_secret
 ```
 Start the backend development server:
 ```bash
 npm run dev
 ```
-The server will start on `http://localhost:3000`.
 
 3. **Frontend Setup**
-Open a new terminal window, then:
+Open a new terminal window:
 ```bash
 cd Frontend/mini-E-commerce
 npm install
 ```
 Start the Angular development server:
 ```bash
-npm start or use `ng serve`
+ng serve
 ```
 Open your browser and navigate to `http://localhost:4200/`.
 
-## API Documentation
+## 📚 API Endpoints Summary
 
 ### Authentication
+- `POST /api/users/register` - Register a new user
+- `POST /api/users/login` - Authenticate and get tokens
+- `POST /api/users/logout` - Invalidate session/tokens
+- `POST /api/users/refresh` - Refresh access token
+- `GET /api/users/verify-email/:token` - Verify email address
+- `POST /api/users/forget-password` - Request password reset
 
-#### Register User
-```http
-POST /api/auth/register
+### User Profile
+- `GET /api/users/me` - Get current user profile
+- `PUT /api/users/me` - Update user profile
 
-Body:
-{
-  "email": "[EMAIL_ADDRESS]",
-  "password": "password123",
-  "name": "John Doe",
-  "role": "user"
-}
-```
+*(Additional endpoints for Products, Cart, and Orders are structured under `/api/products`, `/api/cart`, and `/api/orders` respectively.)*
 
-#### Login
-```http
-POST /api/auth/login
-
-Body:
-{
-  "email": "[EMAIL_ADDRESS]",
-  "password": "password123"
-}
-```
-
-#### Logout
-```http
-POST /api/auth/logout
-
-Headers:
-Authorization: Bearer <access_token>
-```
-
-#### Refresh Access Token
-```http
-POST /api/auth/refresh
-
-Body:
-{
-  "refreshToken": "<refresh_token>"
-}
-```
-
-#### Protected Route Example
-```http
-GET /api/protected
-
-Headers:
-Authorization: Bearer <access_token>
-```
-
-## Error Handling
-
-Errors are handled using centralized middleware:
-- 404 - Not Found
-- 401 - Unauthorized
-- 403 - Forbidden
-- 500 - Server Error
-
-## Technologies Used
-
-### Backend
-- Node.js & Express.js
-- MongoDB & Mongoose
-- JWT (JSON Web Tokens)
-- bcrypt (for password hashing)
-- dotenv (for environment variables)
-
-### Frontend
-- Angular (v21)
-- TypeScript
-- RxJS
-- HTML/CSS
-
-## Contributors
+## 👥 Contributors
 
 - AbdelrahmanOsama243
 - hazem327

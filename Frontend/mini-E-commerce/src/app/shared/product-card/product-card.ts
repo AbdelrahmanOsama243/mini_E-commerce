@@ -29,6 +29,11 @@ export class ProductCardComponent {
       return;
     }
 
+    if (!this.authService.isVerified()) {
+      this.toastService.showError('Please verify your email address to add items to your cart.');
+      return;
+    }
+
     if (this.product.stock <= 0) {
       this.toastService.showError('This item is currently out of stock.');
       return;

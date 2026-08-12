@@ -72,6 +72,11 @@ export class ProductDetailComponent implements OnInit {
       return;
     }
 
+    if (!this.authService.isVerified()) {
+      this.toastService.showError('Please verify your email address to add items to your cart.');
+      return;
+    }
+
     this.cartService.addItem({ productId: prod._id!, quantity: this.quantity() }).subscribe({
       next: () => {
         this.toastService.showSuccess(`${this.quantity()} ${prod.name} added to cart!`);

@@ -6,6 +6,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { CartService } from '../../core/Services/cart-service';
 import { Cart } from '../../Models/icart';
 import { OrderService } from '../../core/Services/order-service';
+import { AuthService } from '../../core/Services/auth-service';
 import { ToastService } from '../../shared/toast/toast.service';
 import { LoadingSpinnerComponent } from '../../shared/loading-spinner/loading-spinner';
 
@@ -19,6 +20,7 @@ export class CheckoutComponent implements OnInit {
   private fb = inject(FormBuilder);
   private cartService = inject(CartService);
   private orderService = inject(OrderService);
+  private authService = inject(AuthService);
   private toastService = inject(ToastService);
   private router = inject(Router);
 
@@ -69,6 +71,11 @@ export class CheckoutComponent implements OnInit {
 
   onSubmit() {
     this.submitted = true;
+
+    if (!this.authService.isVerified()) {
+      this.toastService.showError('You must verify your email before placing an order.');
+      return;
+    }
 
     if (this.addressForm.invalid) {
       return;

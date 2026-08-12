@@ -72,8 +72,8 @@ export class RegisterComponent {
     this.authService.register({ name, email, password }).subscribe({
       next: () => {
         this.loading.set(false);
-        this.toastService.showSuccess('Registered and logged in successfully!');
-        this.router.navigate(['/']);
+        this.toastService.showSuccess('Registration successful! Please check your email to verify your account.');
+        this.router.navigate(['/login']);
       },
       error: () => {
         this.loading.set(false);

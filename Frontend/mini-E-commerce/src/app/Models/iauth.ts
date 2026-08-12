@@ -2,10 +2,11 @@
 // Mirrors User.Model.js (only the fields the API ever exposes — password excluded)
 
 export interface User {
-  id: string;       // _id aliased to id in controller responses
+  _id: string;       // _id aliased to id in controller responses
   name: string;
   email: string;
   role: 'user' | 'admin';
+  isVerified?: boolean;
 }
 
 // Full user object returned by GET /me and PUT /me (uses _id, not id)
@@ -14,6 +15,7 @@ export interface UserProfile {
   name: string;
   email: string;
   role: 'user' | 'admin';
+  isVerified?: boolean;
 }
 
 // ─── Request payloads ─────────────────────────────────────────────────────────

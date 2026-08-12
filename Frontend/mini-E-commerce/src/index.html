@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>MiniStore</title>
+  <title>Koshk Store</title>
   <base href="/">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" type="image/x-icon" href="favicon.ico">
@@ -19,59 +19,159 @@
   <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
   
   <!-- Tailwind Configuration -->
+  <style>
+    :root {
+      --color-on-error-container: #93000a;
+      --color-primary: #1a1a1a;
+      --color-on-secondary: #1a1a1a;
+      --color-surface: #f5f0e8;
+      --color-surface-container: #eee9e0;
+      --color-surface-bright: #faf7f2;
+      --color-outline-variant: #d0cbc3;
+      --color-surface-variant: #e8e3da;
+      --color-secondary: #e63b2e;
+      --color-on-primary: #ffffff;
+      --color-inverse-on-surface: #f5f0e8;
+      --color-surface-container-low: #f2ede5;
+      --color-on-tertiary-fixed-variant: #1a1a1a;
+      --color-on-tertiary-container: #1a1a1a;
+      --color-inverse-surface: #1a1a1a;
+      --color-secondary-fixed: #ffdad6;
+      --color-on-tertiary: #ffffff;
+      --color-on-secondary-fixed-variant: #1a1a1a;
+      --color-error: #cc0000;
+      --color-on-surface-variant: #4a4a4a;
+      --color-on-tertiary-fixed: #1a1a1a;
+      --color-on-background: #1a1a1a;
+      --color-inverse-primary: #f5f0e8;
+      --color-on-primary-fixed: #1a1a1a;
+      --color-on-primary-container: #1a1a1a;
+      --color-surface-container-lowest: #ffffff;
+      --color-primary-container: #ffcc00;
+      --color-on-primary-fixed-variant: #1a1a1a;
+      --color-surface-container-highest: #e2ddd4;
+      --color-secondary-container: #ffdad6;
+      --color-primary-fixed-dim: #e6b800;
+      --color-tertiary: #0055ff;
+      --color-secondary-fixed-dim: #ffb3ab;
+      --color-surface-dim: #d6d1c9;
+      --color-error-container: #ffdad6;
+      --color-tertiary-fixed: #d6e3ff;
+      --color-tertiary-container: #d6e3ff;
+      --color-surface-tint: #1a1a1a;
+      --color-on-surface: #1a1a1a;
+      --color-tertiary-fixed-dim: #a8c6ff;
+      --color-on-error: #ffffff;
+      --color-on-secondary-container: #1a1a1a;
+      --color-background: #f5f0e8;
+      --color-outline: #1a1a1a;
+      --color-surface-container-high: #e8e3da;
+      --color-primary-fixed: #ffcc00;
+      --color-on-secondary-fixed: #1a1a1a;
+    }
+    .dark {
+      --color-inverse-primary: #c0000a;
+      --color-on-primary: #690003;
+      --color-inverse-surface: #e5e2e1;
+      --color-primary-fixed-dim: #ffb4aa;
+      --color-error: #ffb4ab;
+      --color-secondary: #adc6ff;
+      --color-on-error-container: #ffdad6;
+      --color-on-secondary: #002e69;
+      --color-outline-variant: #5d3f3b;
+      --color-surface-variant: #353534;
+      --color-surface: #131313;
+      --color-tertiary-container: #d0a600;
+      --color-surface-container-lowest: #0e0e0e;
+      --color-on-tertiary-fixed-variant: #584400;
+      --color-surface-container-high: #2a2a2a;
+      --color-secondary-fixed-dim: #adc6ff;
+      --color-surface-tint: #ffb4aa;
+      --color-on-primary-container: #5c0002;
+      --color-surface-dim: #131313;
+      --color-primary-fixed: #ffdad5;
+      --color-primary: #ffb4aa;
+      --color-on-secondary-fixed: #001a41;
+      --color-on-background: #e5e2e1;
+      --color-background: #131313;
+      --color-on-primary-fixed: #410001;
+      --color-secondary-fixed: #d8e2ff;
+      --color-error-container: #93000a;
+      --color-on-tertiary-container: #4f3d00;
+      --color-inverse-on-surface: #313030;
+      --color-primary-container: #ff5545;
+      --color-surface-container-low: #1c1b1b;
+      --color-on-error: #690005;
+      --color-on-surface: #e5e2e1;
+      --color-secondary-container: #4b8eff;
+      --color-on-secondary-container: #00285c;
+      --color-tertiary-fixed: #ffe08b;
+      --color-on-tertiary: #3d2f00;
+      --color-on-tertiary-fixed: #241a00;
+      --color-surface-container-highest: #353534;
+      --color-on-primary-fixed-variant: #930005;
+      --color-surface-bright: #393939;
+      --color-tertiary: #f1c100;
+      --color-tertiary-fixed-dim: #f1c100;
+      --color-on-surface-variant: #e7bdb7;
+      --color-outline: #ad8883;
+      --color-on-secondary-fixed-variant: #004493;
+      --color-surface-container: #201f1f;
+    }
+  </style>
   <script id="tailwind-config">
     tailwind.config = {
       darkMode: "class",
       theme: {
         extend: {
           "colors": {
-            "on-error-container": "#93000a",
-            "primary": "#000000",
-            "on-secondary": "#000000",
-            "surface": "#f5f0e8",
-            "surface-container": "#eee9e0",
-            "surface-bright": "#faf7f2",
-            "outline-variant": "#d0cbc3",
-            "surface-variant": "#e8e3da",
-            "secondary": "#e63b2e",
-            "on-primary": "#ffffff",
-            "inverse-on-surface": "#f5f0e8",
-            "surface-container-low": "#f2ede5",
-            "on-tertiary-fixed-variant": "#000000",
-            "on-tertiary-container": "#000000",
-            "inverse-surface": "#000000",
-            "secondary-fixed": "#ffdad6",
-            "on-tertiary": "#ffffff",
-            "on-secondary-fixed-variant": "#000000",
-            "error": "#cc0000",
-            "on-surface-variant": "#4a4a4a",
-            "on-tertiary-fixed": "#000000",
-            "on-background": "#000000",
-            "inverse-primary": "#f5f0e8",
-            "on-primary-fixed": "#000000",
-            "on-primary-container": "#000000",
-            "surface-container-lowest": "#ffffff",
-            "primary-container": "#ffcc00",
-            "on-primary-fixed-variant": "#000000",
-            "surface-container-highest": "#e2ddd4",
-            "secondary-container": "#ffdad6",
-            "primary-fixed-dim": "#e6b800",
-            "tertiary": "#0055ff",
-            "secondary-fixed-dim": "#ffb3ab",
-            "surface-dim": "#d6d1c9",
-            "error-container": "#ffdad6",
-            "tertiary-fixed": "#d6e3ff",
-            "tertiary-container": "#d6e3ff",
-            "surface-tint": "#000000",
-            "on-surface": "#000000",
-            "tertiary-fixed-dim": "#a8c6ff",
-            "on-error": "#ffffff",
-            "on-secondary-container": "#000000",
-            "background": "#f5f0e8",
-            "outline": "#000000",
-            "surface-container-high": "#e8e3da",
-            "primary-fixed": "#ffcc00",
-            "on-secondary-fixed": "#000000"
+            "on-error-container": "var(--color-on-error-container)",
+            "primary": "var(--color-primary)",
+            "on-secondary": "var(--color-on-secondary)",
+            "surface": "var(--color-surface)",
+            "surface-container": "var(--color-surface-container)",
+            "surface-bright": "var(--color-surface-bright)",
+            "outline-variant": "var(--color-outline-variant)",
+            "surface-variant": "var(--color-surface-variant)",
+            "secondary": "var(--color-secondary)",
+            "on-primary": "var(--color-on-primary)",
+            "inverse-on-surface": "var(--color-inverse-on-surface)",
+            "surface-container-low": "var(--color-surface-container-low)",
+            "on-tertiary-fixed-variant": "var(--color-on-tertiary-fixed-variant)",
+            "on-tertiary-container": "var(--color-on-tertiary-container)",
+            "inverse-surface": "var(--color-inverse-surface)",
+            "secondary-fixed": "var(--color-secondary-fixed)",
+            "on-tertiary": "var(--color-on-tertiary)",
+            "on-secondary-fixed-variant": "var(--color-on-secondary-fixed-variant)",
+            "error": "var(--color-error)",
+            "on-surface-variant": "var(--color-on-surface-variant)",
+            "on-tertiary-fixed": "var(--color-on-tertiary-fixed)",
+            "on-background": "var(--color-on-background)",
+            "inverse-primary": "var(--color-inverse-primary)",
+            "on-primary-fixed": "var(--color-on-primary-fixed)",
+            "on-primary-container": "var(--color-on-primary-container)",
+            "surface-container-lowest": "var(--color-surface-container-lowest)",
+            "primary-container": "var(--color-primary-container)",
+            "on-primary-fixed-variant": "var(--color-on-primary-fixed-variant)",
+            "surface-container-highest": "var(--color-surface-container-highest)",
+            "secondary-container": "var(--color-secondary-container)",
+            "primary-fixed-dim": "var(--color-primary-fixed-dim)",
+            "tertiary": "var(--color-tertiary)",
+            "secondary-fixed-dim": "var(--color-secondary-fixed-dim)",
+            "surface-dim": "var(--color-surface-dim)",
+            "error-container": "var(--color-error-container)",
+            "tertiary-fixed": "var(--color-tertiary-fixed)",
+            "tertiary-container": "var(--color-tertiary-container)",
+            "surface-tint": "var(--color-surface-tint)",
+            "on-surface": "var(--color-on-surface)",
+            "tertiary-fixed-dim": "var(--color-tertiary-fixed-dim)",
+            "on-error": "var(--color-on-error)",
+            "on-secondary-container": "var(--color-on-secondary-container)",
+            "background": "var(--color-background)",
+            "outline": "var(--color-outline)",
+            "surface-container-high": "var(--color-surface-container-high)",
+            "primary-fixed": "var(--color-primary-fixed)",
+            "on-secondary-fixed": "var(--color-on-secondary-fixed)"
           },
           "borderRadius": {
             "DEFAULT": "0.125rem",

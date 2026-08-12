@@ -27,6 +27,10 @@ export const routes: Routes = [
     component: RegisterComponent
   },
   {
+    path: 'verify-email/:token',
+    loadComponent: () => import('./Feather/auth/verify-email/verify-email').then(m => m.VerifyEmailComponent)
+  },
+  {
     path: 'products',
     component: ProductListComponent
   },

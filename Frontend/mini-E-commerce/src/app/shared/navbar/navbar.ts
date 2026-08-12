@@ -17,7 +17,29 @@ export class NavbarComponent {
   public mobileMenuOpen = signal(false);
   public categoryMenuOpen = signal(false);
   public mobileCategoryOpen = signal(false);
+  public isDarkMode = signal(false);
 
+  constructor() {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      this.isDarkMode.set(true);
+      document.documentElement.classList.add('dark');
+    } else {
+      this.isDarkMode.set(false);
+      document.documentElement.classList.remove('dark');
+    }
+  }
+
+  toggleDarkMode() {
+    this.isDarkMode.set(!this.isDarkMode());
+    if (this.isDarkMode()) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+    }
+  }
   isLoggedIn() {
     return this.authService.isLoggedIn();
   }

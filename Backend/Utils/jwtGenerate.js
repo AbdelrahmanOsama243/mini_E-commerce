@@ -28,6 +28,14 @@ class JWTServices {
     return this._sign({ ...payload, typ: "refresh" }, REFRESH_SECRET, "30d");
   }
 
+  generateVerificationToken({ name, email, hashedPassword }) {
+    return this._sign({ name, email, hashedPassword, typ: "verification" }, ACCESS_SECRET, "24h");
+  }
+
+  generateResetToken(userId) {
+    return this._sign({ userId, typ: "reset" }, ACCESS_SECRET, "1h");
+  }
+
   extractToken(authHeader) {
     if (!authHeader) return null;
     const parts = authHeader.split(" ");
@@ -43,6 +51,18 @@ class JWTServices {
   verifyRefreshToken(token) {
     const decoded = jwt.verify(token, REFRESH_SECRET, { clockTolerance: 30, issuer: ISSUER });
     if (decoded.typ !== "refresh") throw new jwt.JsonWebTokenError("Invalid token type");
+    return decoded;
+  }
+
+  verifyVerificationToken(token) {
+    const decoded = jwt.verify(token, ACCESS_SECRET, { clockTolerance: 30, issuer: ISSUER });
+    if (decoded.typ !== "verification") throw new jwt.JsonWebTokenError("Invalid token type");
+    return decoded;
+  }
+
+  verifyResetToken(token) {
+    const decoded = jwt.verify(token, ACCESS_SECRET, { clockTolerance: 30, issuer: ISSUER });
+    if (decoded.typ !== "reset") throw new jwt.JsonWebTokenError("Invalid token type");
     return decoded;
   }
 

@@ -584,7 +584,7 @@ async function seed() {
       const user = await User.findOneAndUpdate(
         { email: u.email }, 
         { $set: { ...u, password: hashedPassword } },
-        { upsert: true, new: true } 
+        { upsert: true, returnDocument: 'after' } 
       );
       upsertedUsers.push(user);
     }
@@ -598,7 +598,7 @@ async function seed() {
       const product = await Product.findOneAndUpdate(
         { name: p.name },
         { $set: p },
-        { upsert: true, new: true }
+        { upsert: true, returnDocument: 'after' }
       );
       upsertedProducts.push(product);
     }
@@ -627,7 +627,7 @@ async function seed() {
       await Cart.findOneAndUpdate(
         { userId: user._id },
         { $set: { userId: user._id, items: cartItems } },
-        { upsert: true, new: true }
+        { upsert: true, returnDocument: 'after' }
       );
     }
     console.log(`🛒 Carts verified and safely upserted for all users`);

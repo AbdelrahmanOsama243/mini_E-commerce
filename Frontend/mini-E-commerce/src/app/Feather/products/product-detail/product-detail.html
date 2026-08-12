@@ -9,7 +9,7 @@
   @if (product(); as prod) {
     <div class="grid grid-cols-1 md:grid-cols-2 gap-12 mt-4">
       <!-- Image Block -->
-      <div class="border-4 border-black bg-surface-container brutalist-shadow aspect-square overflow-hidden">
+      <div class="border-4 border-primary bg-surface-container brutalist-shadow aspect-square overflow-hidden">
         <img 
           [src]="prod.image || 'https://picsum.photos/seed/product/600/600'" 
           [alt]="prod.name"
@@ -28,7 +28,7 @@
           </h1>
           <p class="font-headline text-3xl font-black mb-6 tracking-tight">${{ prod.price }}</p>
           
-          <div class="border-y-4 border-black py-6 mb-6">
+          <div class="border-y-4 border-primary py-6 mb-6">
             <h3 class="font-headline font-bold uppercase text-sm mb-2 text-on-surface-variant">Description</h3>
             <p class="font-body text-on-surface-variant leading-relaxed">{{ prod.description }}</p>
           </div>
@@ -50,12 +50,12 @@
         @if (prod.stock > 0) {
           <div class="flex flex-wrap gap-4 items-center mt-6">
             <!-- Quantity Controls -->
-            <div class="flex border-4 border-black h-14 bg-white brutalist-shadow-sm">
+            <div class="flex border-4 border-primary h-14 bg-white brutalist-shadow-sm">
               <button 
                 (click)="decreaseQty()" 
                 [disabled]="quantity() <= 1"
                 aria-label="Decrease quantity" 
-                class="w-12 h-full flex items-center justify-center hover:bg-primary-container border-r-4 border-black font-bold text-xl transition-colors disabled:opacity-50"
+                class="w-12 h-full flex items-center justify-center hover:bg-primary-container border-r-4 border-primary font-bold text-xl transition-colors disabled:opacity-50"
               >
                 <span class="material-symbols-outlined">remove</span>
               </button>
@@ -66,7 +66,7 @@
                 (click)="increaseQty(prod.stock)" 
                 [disabled]="quantity() >= prod.stock"
                 aria-label="Increase quantity" 
-                class="w-12 h-full flex items-center justify-center hover:bg-primary-container border-l-4 border-black font-bold text-xl transition-colors disabled:opacity-50"
+                class="w-12 h-full flex items-center justify-center hover:bg-primary-container border-l-4 border-primary font-bold text-xl transition-colors disabled:opacity-50"
               >
                 <span class="material-symbols-outlined">add</span>
               </button>

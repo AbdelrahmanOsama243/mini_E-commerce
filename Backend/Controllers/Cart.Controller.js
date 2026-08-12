@@ -20,6 +20,11 @@ const getCart = [
       await CartRepo.createCart(userId);
       cart = await CartRepo.getCartByUserId(userId);
     }
+    
+    if (req.session) {
+      req.session.cartId = cart._id;
+      req.session.cartItems = cart.items;
+    }
 
     return sendSuccess(res, cart);
   })
@@ -80,6 +85,11 @@ const addItemToCart = [
 
   const cart = await CartRepo.updateCart(existingCart._id, plainItems);
 
+  if (req.session) {
+    req.session.cartId = cart._id;
+    req.session.cartItems = cart.items;
+  }
+
   return sendSuccess(res, cart, 'Item added to cart', existingItem ? 200 : 201);
   })
 ];
@@ -122,6 +132,12 @@ const updateCartItemQuantity = [
     }));
 
     const cart = await CartRepo.updateCart(existingCart._id, plainItems);
+    
+    if (req.session) {
+      req.session.cartId = cart._id;
+      req.session.cartItems = cart.items;
+    }
+    
     return sendSuccess(res, cart, 'Item quantity updated');
   })
 ];
@@ -152,6 +168,12 @@ const removeItemFromCart = [
       }));
 
     const cart = await CartRepo.updateCart(existingCart._id, plainItems);
+    
+    if (req.session) {
+      req.session.cartId = cart._id;
+      req.session.cartItems = cart.items;
+    }
+    
     return sendSuccess(res, cart, 'Item removed from cart');
   })
 ];
@@ -167,6 +189,12 @@ const clearCart = [
     }
 
     const cart = await CartRepo.updateCart(existingCart._id, []);
+    
+    if (req.session) {
+      req.session.cartId = cart._id;
+      req.session.cartItems = cart.items;
+    }
+    
     return sendSuccess(res, cart, 'Cart cleared successfully');
   })
 ];

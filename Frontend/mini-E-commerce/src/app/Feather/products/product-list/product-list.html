@@ -5,7 +5,7 @@
   <aside class="w-full md:w-64 flex-shrink-0 flex flex-col gap-6">
     <!-- Categories Filter -->
     <div class="bg-surface-container brutalist-border p-6 brutalist-shadow">
-      <h3 class="font-headline font-bold text-xl uppercase mb-4 border-b-4 border-black pb-2">Categories</h3>
+      <h3 class="font-headline font-bold text-xl uppercase mb-4 border-b-4 border-primary pb-2">Categories</h3>
       <ul class="space-y-3 font-headline font-semibold">
         @for (cat of categories; track cat.id) {
           <li>
@@ -14,7 +14,7 @@
                 type="checkbox"
                 [checked]="selectedCategory() === cat.id"
                 (change)="toggleCategory(cat.id)"
-                class="form-checkbox h-5 w-5 text-primary border-4 border-black rounded-none focus:ring-0 focus:ring-offset-0 bg-background checked:bg-primary cursor-pointer"
+                class="form-checkbox h-5 w-5 text-primary border-4 border-primary rounded-none focus:ring-0 focus:ring-offset-0 bg-background checked:bg-primary cursor-pointer"
               />
               <span class="group-hover:text-secondary transition-colors uppercase">{{ cat.name }}</span>
             </label>
@@ -25,7 +25,7 @@
 
     <!-- Price Range Filter -->
     <div class="bg-surface-container brutalist-border p-6 brutalist-shadow">
-      <h3 class="font-headline font-bold text-xl uppercase mb-4 border-b-4 border-black pb-2">Max Price</h3>
+      <h3 class="font-headline font-bold text-xl uppercase mb-4 border-b-4 border-primary pb-2">Max Price</h3>
       <div class="space-y-4">
         <input 
           type="range" 
@@ -54,7 +54,7 @@
 
   <!-- Main Product Grid -->
   <section class="flex-grow flex flex-col gap-6">
-    <div class="flex justify-between items-end border-b-4 border-black pb-4">
+    <div class="flex justify-between items-end border-b-4 border-primary pb-4">
       <h1 class="text-4xl md:text-6xl font-headline font-black uppercase tracking-tighter">
         {{ selectedCategory() ? selectedCategory() : 'Shop All' }}
       </h1>

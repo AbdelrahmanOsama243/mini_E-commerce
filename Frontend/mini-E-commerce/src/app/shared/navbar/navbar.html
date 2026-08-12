@@ -9,11 +9,11 @@
       class="text-2xl font-headline font-black text-primary uppercase flex items-center gap-2"
     >
       <img
-        alt="MiniStore Logo"
+        alt="Koshk Store Logo"
         class="h-10 w-10 object-contain border-2 border-primary brutalist-shadow-sm bg-white"
-        src="https://lh3.googleusercontent.com/aida-public/AB6AXuB244ezzR2F-awqvPSO2hNhJ-Xwi0oPhGvsImVivUpqxhqNuKAm9VvCm_nJgkwwIkmaMEQCQSomA4Wukw0Ys6S-RlNTcM9xF0barjn6XzsDrGKF_CX42vXrT0-Qmi0uu5KBEUovoVvVzb5kzsK8OCdjrHqe1dMmglrxau81bCtMp6zM3DbjSL8lHF6KFL3S1Tw9wXqr_zgaKKQ_A7e0wAl3Y9iume3L0B7B-fNkmkYt4x7ANowhEUR795H8heeOVCSKr8QUjz-gNFXb"
+        src="https://lh3.googleusercontent.com/aida-public/AB6AXuB2uHqkKTHcbgyVeksS4OCCQYe0MQ86q4D8-LDVJX-VA6F3yVA7H2Iv6NXCdIqC3eb7nvqNz0NfgczuEQo4opsKgvbygSpp5n4QnzRUVEUoprxjGOjr6BcubvsIUWDTS9HNCDo98h8jQGOBWAMlovIy6_0f8WVzjym8RawDTRWG8seZ01YTBmMfZgzeGpSQA98MUmluJXcBRicKm6XlINYdFvgPLjQPP_IhyQJPFs-aKrTZp9fhZ2B5Ng"
       />
-      MiniStore
+      Keshk Store
     </a>
 
     <!-- Navigation Links (Desktop) -->
@@ -168,11 +168,22 @@
       </button>
     </div>
 
+    <!-- Dark Mode Toggle -->
+    <button
+      (click)="toggleDarkMode()"
+      class="hover:bg-primary hover:text-on-primary transition-all p-2 rounded-DEFAULT relative active:translate-x-1 active:translate-y-1"
+      title="Toggle Dark Mode"
+    >
+      <span class="material-symbols-outlined fill" style="font-variation-settings: 'FILL' 1;">
+        {{ isDarkMode() ? 'light_mode' : 'dark_mode' }}
+      </span>
+    </button>
+
     <!-- Cart Icon -->
     @if (isLoggedIn()) {
       <a
         routerLink="/cart"
-        class="hover:bg-primary hover:text-on-primary transition-all p-2 rounded-DEFAULT relative active:translate-x-1 active:translate-y-1 active:shadow-none"
+        class="hover:bg-primary hover:text-on-primary transition-all p-2 rounded-DEFAULT relative active:translate-x-1 active:translate-y-1"
       >
         <span class="material-symbols-outlined fill" style="font-variation-settings: 'FILL' 1;"
           >shopping_cart</span
@@ -198,7 +209,7 @@
           </span>
           <button
             (click)="logout()"
-            class="logout-btn relative overflow-hidden p-2 transition-all active:translate-x-1 active:translate-y-1 active:shadow-none"
+            class="logout-btn relative overflow-hidden p-2 transition-all active:translate-x-1 active:translate-y-1"
             title="Logout"
           >
             <span class="material-symbols-outlined relative z-10 transition-colors">logout</span>
@@ -225,7 +236,7 @@
     <!-- Mobile Menu Toggle -->
     <button
       (click)="toggleMobileMenu()"
-      class="md:hidden p-2 border-2 border-primary brutalist-shadow-sm active:translate-x-1 active:translate-y-1 active:shadow-none bg-primary-container"
+      class="md:hidden p-2 border-2 border-primary brutalist-shadow-sm brutalist-shadow-sm-hover bg-primary-container"
     >
       <span class="material-symbols-outlined">menu</span>
     </button>

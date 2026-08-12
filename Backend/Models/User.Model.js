@@ -25,6 +25,10 @@ const userSchema = new mongoose.Schema(
       enum: ['active', 'suspended'],
       default: 'active'
     },
+    isVerified: {
+      type: Boolean,
+      default: false
+    },
   }, 
   {
     timestamps: true, 

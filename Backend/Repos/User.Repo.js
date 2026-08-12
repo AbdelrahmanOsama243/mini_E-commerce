@@ -21,6 +21,15 @@ class UserRepository extends BaseRepo {
     return await this.findOne({ email });
   }
 
+  async createVerifiedUser({ name, email, hashedPassword }) {
+    return await this.create({
+      name,
+      email,
+      password: hashedPassword,
+      isVerified: true,
+    });
+  }
+
   async findUserById(id) {
     return await this.findById(id, { select: "-password" });
   }

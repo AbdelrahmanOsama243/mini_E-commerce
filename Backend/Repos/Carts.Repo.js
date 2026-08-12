@@ -5,10 +5,11 @@ class CartsRepository extends BaseRepo {
   constructor() {
     super(Cart);
     this.allowedUpdates = ['items'];
+    this.allowedPopulates = ['items.productId'];
   }
 
   async getCartByUserId(userId) {
-    return await this.findOne({ userId }, { populate: 'items.productId' });
+    return await this.findOne({ userId }, { populate: this.allowedPopulates });
   }
 
   async getCartDocumentByUserId(userId) {
@@ -28,7 +29,7 @@ class CartsRepository extends BaseRepo {
 
   async updateCart(cartId, items) {
     const updated = await this.update(cartId, { items });
-    return await this.model.populate(updated, { path: 'items.productId' });
+    return await this.model.populate(updated, { path: this.allowedPopulates });
   }
 }
 

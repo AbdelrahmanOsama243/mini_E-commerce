@@ -17,9 +17,20 @@ const createOrder = asyncHandler(async (req, res, next) => {
     return next(new ApiError(401, "Unauthorized"));
   }
 
-  // Get cart
-  const cart = await CartsRepository.getCartByUserId(userId);
-  if (!cart || cart.items.length === 0) {
+  // Get cart from session or DB fallback
+  let cartItems = req.session?.cartItems;
+  let cartId = req.session?.cartId;
+  
+  if (!cartItems || !cartId) {
+    const cart = await CartsRepository.getCartByUserId(userId);
+    if (!cart) {
+      return next(new ApiError(400, "Cart is empty"));
+    }
+    cartItems = cart.items;
+    cartId = cart._id;
+  }
+
+  if (cartItems.length === 0) {
     return next(new ApiError(400, "Cart is empty"));
   }
 
@@ -41,15 +52,15 @@ const createOrder = asyncHandler(async (req, res, next) => {
   }
 
   // Create order items array
-  const orderItems = cart.items.map((item) => ({
-    productId: item.productId._id,
+  const orderItems = cartItems.map((item) => ({
+    productId: item.productId._id || item.productId, // Fallback if not fully populated
     quantity: item.quantity,
-    priceAtPurchase: item.productId.price,
+    priceAtPurchase: item.productId.price || 0, // Should be populated for price
   }));
 
   // Calculate total price
-  const totalPrice = cart.items.reduce((total, item) => {
-    return total + item.quantity * item.productId.price;
+  const totalPrice = cartItems.reduce((total, item) => {
+    return total + item.quantity * (item.productId.price || 0);
   }, 0);
 
   // Create order
@@ -61,8 +72,13 @@ const createOrder = asyncHandler(async (req, res, next) => {
     status: "pending",
   });
 
-  // Clear cart
-  await CartsRepository.updateCart(cart._id, []);
+  // Clear cart in DB
+  await CartsRepository.updateCart(cartId, []);
+  
+  // Clear cart in session
+  if (req.session) {
+    req.session.cartItems = [];
+  }
 
   return sendSuccess(res, order, "Order created successfully", 201);
 });

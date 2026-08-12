@@ -162,7 +162,7 @@
             <span class="font-headline font-bold text-2xl">${{ featuredProducts()[0].price }}</span>
             <button 
               (click)="addToCart(featuredProducts()[0])" 
-              class="bg-primary text-on-primary border-4 border-primary font-headline uppercase font-bold py-2 px-6 transition-all hover:bg-secondary hover:text-primary active:translate-x-1 active:translate-y-1 active:shadow-none"
+              class="bg-primary text-on-primary border-4 border-primary font-headline uppercase font-bold py-2 px-6 brutalist-button brutalist-shadow brutalist-shadow-hover hover:bg-secondary hover:text-primary"
             >
               Add to Cart
             </button>
@@ -173,8 +173,8 @@
       <!-- Smaller Featured Products (Product 1 & 2) -->
       <div class="lg:col-span-4 flex flex-col gap-8">
         <!-- Product 1 -->
-        <div class="border-4 border-black bg-surface p-4 flex flex-col justify-between flex-grow brutalist-shadow">
-          <div class="w-full h-44 border-4 border-black mb-4 bg-surface-container-high relative overflow-hidden group">
+        <div class="border-4 border-primary bg-surface p-4 flex flex-col justify-between flex-grow brutalist-shadow">
+          <div class="w-full h-44 border-4 border-primary mb-4 bg-surface-container-high relative overflow-hidden group">
             <img 
               [src]="featuredProducts()[1].image" 
               [alt]="featuredProducts()[1].name"
@@ -191,7 +191,7 @@
               <span class="font-headline font-bold text-lg">${{ featuredProducts()[1].price }}</span>
               <button 
                 (click)="addToCart(featuredProducts()[1])" 
-                class="bg-primary text-on-primary border-4 border-black font-headline uppercase font-bold py-1 px-4 transition-all hover:bg-tertiary hover:text-on-primary brutalist-button"
+                class="bg-primary text-on-primary border-4 border-primary font-headline uppercase font-bold py-1 px-4 transition-all hover:bg-tertiary hover:text-on-primary brutalist-button"
               >
                 Add
               </button>
@@ -200,8 +200,8 @@
         </div>
 
         <!-- Product 2 -->
-        <div class="border-4 border-black bg-surface p-4 flex flex-col justify-between flex-grow brutalist-shadow">
-          <div class="w-full h-44 border-4 border-black mb-4 bg-surface-container-high relative overflow-hidden group">
+        <div class="border-4 border-primary bg-surface p-4 flex flex-col justify-between flex-grow brutalist-shadow">
+          <div class="w-full h-44 border-4 border-primary mb-4 bg-surface-container-high relative overflow-hidden group">
             <img 
               [src]="featuredProducts()[2].image" 
               [alt]="featuredProducts()[2].name"
@@ -218,7 +218,7 @@
               <span class="font-headline font-bold text-lg">${{ featuredProducts()[2].price }}</span>
               <button 
                 (click)="addToCart(featuredProducts()[2])" 
-                class="bg-primary text-on-primary border-4 border-black font-headline uppercase font-bold py-1 px-4 transition-all hover:bg-primary-container hover:text-primary brutalist-button"
+                class="bg-primary text-on-primary border-4 border-primary font-headline uppercase font-bold py-1 px-4 transition-all hover:bg-primary-container hover:text-primary brutalist-button"
               >
                 Add
               </button>

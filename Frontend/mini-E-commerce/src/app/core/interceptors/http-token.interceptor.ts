@@ -3,17 +3,11 @@ import { inject } from '@angular/core';
 import { AuthService } from '../Services/auth-service';
 
 export const httpTokenInterceptor: HttpInterceptorFn = (req, next) => {
-  const authService = inject(AuthService);
-  const token = authService.getToken();
-
-  const isRefresh = req.url.includes('/refresh');
-  if (token && !isRefresh) {
-    req = req.clone({
-      setHeaders: {
-        Authorization: `Bearer ${token}`
-      }
-    });
-  }
+  // When using session cookies, we need to ensure withCredentials is true
+  // so that the browser sends cookies with cross-origin requests.
+  req = req.clone({
+    withCredentials: true
+  });
 
   return next(req);
 };

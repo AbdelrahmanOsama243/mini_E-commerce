@@ -1,8 +1,18 @@
-# MiniECommerce
+# Mini E-Commerce Frontend
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.2.19.
+This is the Angular-based Single Page Application (SPA) for the Mini E-Commerce platform. It was generated with [Angular CLI](https://github.com/angular/angular-cli) version 21.2.19.
 
-## Development server
+## Project Architecture
+
+The frontend is designed with a clean separation of concerns, heavily utilizing Angular's component-based architecture and reactive programming (RxJS). 
+
+### Core Concepts:
+- **Services (`src/app/core/Services`)**: Manages business logic and API communication. E.g., `AuthService` handles all user authentication, login/logout flows, and session management using strongly typed models.
+- **Models (`src/app/Models`)**: Contains TypeScript interfaces mapping precisely to the backend API responses (e.g., `iauth.ts` defining `User`, `LoginResponse`, etc.). This guarantees type safety across HTTP calls.
+- **Components (`src/app/Feather` & others)**: Modular UI components dividing the application into distinct, reusable pieces (Authentication views, Email Verification, Product Listings, etc.).
+- **Guards (`src/app/core/guards`)**: Route guards protecting authenticated routes from unauthorized access.
+
+## Development Server
 
 To start a local development server, run:
 
@@ -10,50 +20,23 @@ To start a local development server, run:
 ng serve
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+Navigate to `http://localhost:4200/`. The app will automatically reload if you change any of the source files.
 
-## Code scaffolding
+## Environment Variables
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
-
-```bash
-ng generate component component-name
+Make sure to configure your `src/environments/environment.ts` (and `environment.prod.ts`) with the correct backend API URL.
+```typescript
+export const environment = {
+  production: false,
+  apiUrl: 'http://localhost:3000/api' // Replace with your backend URL
+};
 ```
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+## Running tests
 
-```bash
-ng generate --help
-```
+- **Unit tests**: Run `ng test` to execute unit tests via [Vitest](https://vitest.dev/).
+- **End-to-End**: Run `ng e2e` for end-to-end tests (requires setting up a framework like Cypress or Playwright).
 
-## Building
+## Building for Production
 
-To build the project run:
-
-```bash
-ng build
-```
-
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
-
-```bash
-ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory, fully optimized for production deployment.
