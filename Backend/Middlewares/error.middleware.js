@@ -1,4 +1,5 @@
 const { sendError } = require('../Utils/response');
+const logger = require('../Config/logger');
 
 const errorHandler = (err, req, res, next) => {
   let statusCode = err.statusCode || 500;
@@ -34,7 +35,7 @@ const errorHandler = (err, req, res, next) => {
   }
 
   // Log error server-side
-  console.error(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl} - ${statusCode}: ${message}`);
+  logger.error({ err, statusCode, method: req.method, url: req.originalUrl }, message);
 
   sendError(res, statusCode, message, err.stack);
 };

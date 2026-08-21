@@ -50,10 +50,8 @@ export class VerifyEmailComponent implements OnInit {
             next: (res) => {
               const user = res.data ?? res;
               // Re-save session with updated user
-              const authRes = {
-                user: user,
-              } as any;
-              this.authService.saveSession(authRes);
+              const token = this.authService.getAccessToken();
+              this.authService.saveSession(user as any, token || '');
             },
           });
         }

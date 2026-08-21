@@ -26,9 +26,7 @@ const productSchema = new mongoose.Schema(
     },
     image: {
         type: String,
-          match: [/^(https?:\/\/)?([\w-]+\.)+[\w-]+(\/[\w-./?%&=]*)?$/,
-                 'Please enter a valid URL',
-                 ],
+        // Accepts both URLs and local file paths (e.g., /uploads/products/product-123.jpg)
     }
   },
   {

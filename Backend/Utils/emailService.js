@@ -1,4 +1,5 @@
 const nodemailer = require("nodemailer");
+const logger = require("../Config/logger");
 require("dotenv").config();
 
 const createTransporter = async () => {
@@ -15,9 +16,7 @@ const createTransporter = async () => {
     });
   } else {
     // Fallback for development using Ethereal Email
-    console.log(
-      "No SMTP credentials found in .env, generating ethereal test account...",
-    );
+    logger.info("No SMTP credentials found in .env, generating ethereal test account...");
     let testAccount = await nodemailer.createTestAccount();
     transporter = nodemailer.createTransport({
       host: "smtp.ethereal.email",
@@ -55,15 +54,15 @@ const sendVerificationEmail = async (userEmail, token) => {
     };
 
     const info = await transporter.sendMail(mailOptions);
-    console.log("Verification email sent successfully.");
+    logger.info({ to: userEmail }, "Verification email sent successfully");
 
     if (!process.env.SMTP_USER) {
-      console.log("Preview URL: %s", nodemailer.getTestMessageUrl(info));
+      logger.info({ previewUrl: nodemailer.getTestMessageUrl(info) }, "Ethereal preview URL");
     }
 
     return true;
   } catch (error) {
-    console.error("Error sending verification email:", error);
+    logger.error({ err: error, to: userEmail }, "Error sending verification email");
     throw new Error("Failed to send verification email.");
   }
 };
@@ -89,15 +88,15 @@ const sendForgetPasswordEmail = async (userEmail, token) => {
     };
 
     const info = await transporter.sendMail(mailOptions);
-    console.log("Password reset email sent successfully.");
+    logger.info({ to: userEmail }, "Password reset email sent successfully");
 
     if (!process.env.SMTP_USER) {
-      console.log("Preview URL: %s", nodemailer.getTestMessageUrl(info));
+      logger.info({ previewUrl: nodemailer.getTestMessageUrl(info) }, "Ethereal preview URL");
     }
 
     return true;
   } catch (error) {
-    console.error("Error sending password reset email:", error);
+    logger.error({ err: error, to: userEmail }, "Error sending password reset email");
     throw new Error("Failed to send password reset email.");
   }
 };

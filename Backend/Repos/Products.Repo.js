@@ -8,6 +8,15 @@ class ProductsRepository extends BaseRepo {
     this.allowedUpdates = ['name', 'description', 'price', 'category', 'stock', 'image'];
   }
 
+  async _invalidateProductCache(productId) {
+    // Invalidate individual product cache
+    if (productId) {
+      await redisRepo.deleteByPattern(`product:${productId}:*`);
+    }
+    // Invalidate all product list caches
+    await redisRepo.deleteByPattern('products:query:*');
+  }
+
   async getProducts(query = {}) {
     const cacheKey = `products:query:${JSON.stringify(query)}`;
     const cachedProducts = await redisRepo.get(cacheKey);
@@ -23,7 +32,7 @@ class ProductsRepository extends BaseRepo {
       filter.name = { $regex: search, $options: 'i' };
     }
     if (category) {
-      filter.category = category;
+      filter.category = { $regex: `^${category}$`, $options: 'i' };
     }
 
     const products = await this.findAll(filter, { page: Number(page) || 1, limit: safeLimit });
@@ -41,6 +50,34 @@ class ProductsRepository extends BaseRepo {
     const product = await super.findById(id, options);
     if (product) {
       await redisRepo.set(cacheKey, product, 3600);
+    }
+    return product;
+  }
+
+  async update(id, data, options = {}) {
+    const updatedProduct = await super.update(id, data, options);
+    if (updatedProduct) {
+      await this._invalidateProductCache(id);
+    }
+    return updatedProduct;
+  }
+
+  async delete(id, options = {}) {
+    const deletedProduct = await super.delete(id, options);
+    if (deletedProduct) {
+      await this._invalidateProductCache(id);
+    }
+    return deletedProduct;
+  }
+
+  async decrementStock(productId, quantity) {
+    const product = await this.model.findOneAndUpdate(
+      { _id: productId, stock: { $gte: quantity } }, // Ensure enough stock
+      { $inc: { stock: -quantity } },
+      { new: true }
+    );
+    if (product) {
+      await this._invalidateProductCache(productId);
     }
     return product;
   }

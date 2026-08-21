@@ -49,7 +49,7 @@ export class CartService {
   getCart(): Observable<CartResponse> {
     return this.http.get<CartResponse>(
       this.apiUrl,
-      { headers: this.getAuthHeaders() }
+      { headers: this.getAuthHeaders(), withCredentials: true }
     ).pipe(tap(res => this.updateCount(res)));
   }
 
@@ -61,7 +61,7 @@ export class CartService {
     return this.http.post<CartResponse>(
       this.apiUrl,
       payload,
-      { headers: this.getAuthHeaders() }
+      { headers: this.getAuthHeaders(), withCredentials: true }
     ).pipe(tap(res => this.updateCount(res)));
   }
 
@@ -70,7 +70,7 @@ export class CartService {
     return this.http.put<CartResponse>(
       `${this.apiUrl}/${itemId}`,
       payload,
-      { headers: this.getAuthHeaders() }
+      { headers: this.getAuthHeaders(), withCredentials: true }
     ).pipe(tap(res => this.updateCount(res)));
   }
 
@@ -78,7 +78,7 @@ export class CartService {
   removeItem(itemId: string): Observable<CartResponse> {
     return this.http.delete<CartResponse>(
       `${this.apiUrl}/${itemId}`,
-      { headers: this.getAuthHeaders() }
+      { headers: this.getAuthHeaders(), withCredentials: true }
     ).pipe(tap(res => this.updateCount(res)));
   }
 
@@ -86,7 +86,7 @@ export class CartService {
   clearCart(): Observable<CartResponse> {
     return this.http.delete<CartResponse>(
       this.apiUrl,
-      { headers: this.getAuthHeaders() }
+      { headers: this.getAuthHeaders(), withCredentials: true }
     ).pipe(tap(res => this.updateCount(res)));
   }
 }

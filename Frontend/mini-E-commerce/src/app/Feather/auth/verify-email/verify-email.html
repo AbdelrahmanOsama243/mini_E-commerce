@@ -1,39 +1,46 @@
-<div class="min-h-[70vh] flex flex-col items-center justify-center p-4">
-  <div class="w-full max-w-md bg-surface p-8 border-4 border-primary brutalist-shadow">
+<div class="min-h-[70vh] flex flex-col items-center justify-center px-6 py-16">
+  <div class="w-full max-w-md bg-surface-container brutalist-border p-8 md:p-12 text-center brutalist-shadow">
     
     <!-- Loading State -->
-    <div *ngIf="isLoading" class="text-center">
-      <span class="material-symbols-outlined text-6xl animate-spin mb-4 text-primary">autorenew</span>
-      <h2 class="text-2xl font-headline font-bold mb-2 text-primary">Processing...</h2>
-      <p class="text-on-surface-variant font-body">{{ message }}</p>
-    </div>
-
-    <!-- Result State -->
-    <div *ngIf="!isLoading" class="text-center">
-      
-      <!-- Success -->
-      <div *ngIf="isSuccess">
-        <span class="material-symbols-outlined text-6xl mb-4 text-green-600">check_circle</span>
-        <h2 class="text-2xl font-headline font-bold mb-2 text-green-600">Congratulations!</h2>
-        <p class="text-on-surface-variant font-body mb-6">{{ message }}</p>
-        <button (click)="goToLogin()" class="brutalist-button px-6 py-3 bg-primary text-on-primary hover:bg-surface hover:text-primary transition-colors">
-          Go to Login
-        </button>
+    @if (isLoading) {
+      <div class="flex flex-col items-center justify-center gap-4 py-6">
+        <span class="material-symbols-outlined text-6xl animate-spin text-primary">autorenew</span>
+        <h2 class="text-3xl font-headline font-black uppercase tracking-tight text-primary">Processing...</h2>
+        <p class="text-on-surface-variant font-body text-sm">{{ message }}</p>
       </div>
-
-      <!-- Error -->
-      <div *ngIf="!isSuccess">
-        <span class="material-symbols-outlined text-6xl mb-4 text-error">warning</span>
-        <h2 class="text-2xl font-headline font-bold mb-2 text-error">Oops!</h2>
-        <p class="text-on-surface-variant font-body mb-6">{{ message }}</p>
-
-
-
-        <button routerLink="/register" class="brutalist-button w-full px-6 py-3 bg-error text-on-error hover:bg-surface hover:text-error transition-colors">
-          Register Again
-        </button>
-      </div>
-
-    </div>
+    } @else {
+      <!-- Result State -->
+      @if (isSuccess) {
+        <!-- Success -->
+        <div class="flex flex-col items-center justify-center py-4">
+          <div class="w-16 h-16 bg-primary-container brutalist-border flex items-center justify-center mb-6">
+            <span class="material-symbols-outlined text-4xl text-primary font-bold">check_circle</span>
+          </div>
+          <h2 class="text-3xl font-headline font-black uppercase tracking-tight mb-2">Verified!</h2>
+          <p class="text-on-surface-variant font-body text-sm mb-8">{{ message }}</p>
+          <button 
+            (click)="goToLogin()" 
+            class="w-full py-4 bg-primary text-on-primary text-xl brutalist-button brutalist-shadow brutalist-shadow-hover"
+          >
+            Sign In Now
+          </button>
+        </div>
+      } @else {
+        <!-- Error -->
+        <div class="flex flex-col items-center justify-center py-4">
+          <div class="w-16 h-16 bg-secondary/10 border-4 border-secondary flex items-center justify-center mb-6">
+            <span class="material-symbols-outlined text-4xl text-secondary font-bold">error</span>
+          </div>
+          <h2 class="text-3xl font-headline font-black uppercase tracking-tight text-secondary mb-2">Verification Failed</h2>
+          <p class="text-on-surface-variant font-body text-sm mb-8">{{ message }}</p>
+          <a 
+            routerLink="/register" 
+            class="w-full py-4 bg-primary text-on-primary text-xl brutalist-button brutalist-shadow brutalist-shadow-hover inline-block"
+          >
+            Register Again
+          </a>
+        </div>
+      }
+    }
   </div>
 </div>

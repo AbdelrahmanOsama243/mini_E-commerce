@@ -66,17 +66,6 @@ export class ProductDetailComponent implements OnInit {
     const prod = this.product();
     if (!prod) return;
 
-    if (!this.authService.isLoggedIn()) {
-      this.toastService.showInfo('Please log in to add items to your cart.');
-      this.router.navigate(['/login'], { queryParams: { returnUrl: `/products/${prod._id}` } });
-      return;
-    }
-
-    if (!this.authService.isVerified()) {
-      this.toastService.showError('Please verify your email address to add items to your cart.');
-      return;
-    }
-
     this.cartService.addItem({ productId: prod._id!, quantity: this.quantity() }).subscribe({
       next: () => {
         this.toastService.showSuccess(`${this.quantity()} ${prod.name} added to cart!`);

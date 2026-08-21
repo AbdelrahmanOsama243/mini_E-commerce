@@ -23,17 +23,6 @@ export class ProductCardComponent {
     event.stopPropagation();
     event.preventDefault();
 
-    if (!this.authService.isLoggedIn()) {
-      this.toastService.showInfo('Please log in to add items to your cart.');
-      this.router.navigate(['/login'], { queryParams: { returnUrl: `/products/${this.product._id}` } });
-      return;
-    }
-
-    if (!this.authService.isVerified()) {
-      this.toastService.showError('Please verify your email address to add items to your cart.');
-      return;
-    }
-
     if (this.product.stock <= 0) {
       this.toastService.showError('This item is currently out of stock.');
       return;

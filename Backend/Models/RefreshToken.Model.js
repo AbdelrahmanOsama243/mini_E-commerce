@@ -14,7 +14,8 @@ const refreshTokenSchema = new mongoose.Schema(
     },
     expiresAt: {
       type: Date,
-      required: true
+      required: true,
+      index: { expires: 0 } // TTL index: MongoDB auto-deletes docs when expiresAt is reached
     }
   }, 
   {

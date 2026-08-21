@@ -3,12 +3,15 @@ const orderController = require("../Controllers/order.controller");
 const { authentication } = require("../Middlewares/auth.middleware");
 const { authorize } = require("../Middlewares/authorize.middleware");
 const { validateObjectId } = require("../Middlewares/validateObjectId");
+const { validateZod, orderSchemas } = require("../Middlewares/zodValidator");
+// You can also use Joi by uncommenting the next line and changing validateZod to validateJoi
+// const { validateJoi, orderSchemas } = require("../Middlewares/joiValidator");
 
 const router = express.Router();
 
 router.use(authentication);
 
-router.post("/", orderController.createOrder);
+router.post("/", validateZod(orderSchemas.createOrder), orderController.createOrder);
 router.get("/", orderController.getOrders);
 router.get(
   "/:id",
@@ -19,6 +22,7 @@ router.put(
   "/:id/status",
   authorize("admin"),
   validateObjectId(["id"], "params"),
+  validateZod(orderSchemas.updateOrderStatus),
   orderController.updateOrderStatus,
 );
 

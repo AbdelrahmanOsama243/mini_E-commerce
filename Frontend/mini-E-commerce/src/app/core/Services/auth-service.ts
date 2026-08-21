@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable, tap } from 'rxjs';
+import { Observable, BehaviorSubject, tap, catchError, of } from 'rxjs';
 import { environment } from './environment';
 import {
   RegisterPayload,
@@ -22,34 +22,48 @@ export class AuthService {
 
   private readonly apiUrl = `${environment.apiUrl}/users`;
 
-  private readonly USER_KEY = 'user';
+  private currentUserSubject = new BehaviorSubject<User | null>(null);
+  public currentUser$ = this.currentUserSubject.asObservable();
+  
+  private currentAccessToken: string | null = null;
 
   constructor(private http: HttpClient) {}
 
-  /** Persist user profile after login / register. */
-  saveSession(response: AuthResponse): void {
-    localStorage.setItem(this.USER_KEY, JSON.stringify(response.user));
+  /** Try to refresh session on startup */
+  initAuth(): Observable<any> {
+    return this.refreshToken().pipe(
+      catchError(() => {
+        this.clearSession();
+        return of(null);
+      })
+    );
   }
 
-  /** Remove auth keys from localStorage. */
+  /** Get current access token from memory */
+  getAccessToken(): string | null {
+    return this.currentAccessToken;
+  }
+
+  /** Persist user profile and token in memory after login / register. */
+  saveSession(user: User, accessToken: string): void {
+    this.currentAccessToken = accessToken;
+    this.currentUserSubject.next(user);
+  }
+
+  /** Remove auth keys from memory. */
   clearSession(): void {
-    localStorage.removeItem(this.USER_KEY);
+    this.currentAccessToken = null;
+    this.currentUserSubject.next(null);
   }
 
-  /** Return true when a user profile is present in storage. */
+  /** Return true when a user profile is present in memory. */
   isLoggedIn(): boolean {
-    return this.getUser() !== null;
+    return this.currentUserSubject.value !== null;
   }
 
   /** Return the stored user profile, or null when not logged in. */
   getUser(): User | null {
-    const userStr = localStorage.getItem(this.USER_KEY);
-    if (!userStr) return null;
-    try {
-      return JSON.parse(userStr);
-    } catch {
-      return null;
-    }
+    return this.currentUserSubject.value;
   }
 
   /** Return true if the logged in user is an admin. */
@@ -81,7 +95,7 @@ export class AuthService {
   /** POST /api/users/login → 200 { success, message, data: { user, accessToken, refreshToken } } */
   login(payload: LoginPayload): Observable<{ success: boolean; message: string; data: LoginResponse }> {
     return this.http.post<{ success: boolean; message: string; data: LoginResponse }>(`${this.apiUrl}/login`, payload).pipe(
-      tap(res => this.saveSession(res.data))
+      tap(res => this.saveSession(res.data.user, res.data.accessToken))
     );
   }
 
@@ -100,10 +114,20 @@ export class AuthService {
   }
 
   /** POST /api/users/refresh */
-  refreshToken(): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl}/refresh`, {}).pipe(
+  refreshToken(): Observable<{ success: boolean, data: { accessToken: string } }> {
+    return this.http.post<any>(`${this.apiUrl}/refresh`, {}, { withCredentials: true }).pipe(
       tap((res: any) => {
-        // Tokens are managed via cookies, so no local storage updates needed
+        if (res.data && res.data.accessToken) {
+          this.currentAccessToken = res.data.accessToken;
+          // After refreshing token, fetch user profile to populate memory
+          this.getMe().subscribe({
+            next: (meRes) => {
+              if (meRes.data) {
+                this.currentUserSubject.next(meRes.data as unknown as User);
+              }
+            }
+          });
+        }
       })
     );
   }

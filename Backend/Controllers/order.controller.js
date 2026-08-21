@@ -5,51 +5,26 @@ const asyncHandler = require("../Utils/asyncHandler");
 const ApiError = require("../Utils/ApiError");
 const { sendSuccess } = require("../Utils/response");
 const { validateObjectId } = require("../Middlewares/validateObjectId");
+const { addOrderJob } = require("../Jobs/order.queue");
 
 const createOrder = asyncHandler(async (req, res, next) => {
   const { shippingAddress } = req.body;
-  if (!shippingAddress || shippingAddress.trim() === "") {
-    return next(new ApiError(400, "Shipping address is required"));
-  }
-
   const userId = req.user?.id;
   if (!userId) {
     return next(new ApiError(401, "Unauthorized"));
   }
 
-  // Get cart from session or DB fallback
-  let cartItems = req.session?.cartItems;
-  let cartId = req.session?.cartId;
-  
-  if (!cartItems || !cartId) {
-    const cart = await CartsRepository.getCartByUserId(userId);
-    if (!cart) {
-      return next(new ApiError(400, "Cart is empty"));
-    }
-    cartItems = cart.items;
-    cartId = cart._id;
-  }
-
-  if (cartItems.length === 0) {
+  // Fetch cart directly from DB
+  const cart = await CartsRepository.getCartByUserId(userId);
+  if (!cart || cart.items.length === 0) {
     return next(new ApiError(400, "Cart is empty"));
   }
 
-  // Validate stock
-  for (const item of cart.items) {
-    if (!item.productId) {
-      return next(new ApiError(404, "Product in cart not found"));
-    }
-    if (item.quantity > item.productId.stock) {
-      return next(new ApiError(400, `Insufficient stock for ${item.productId.name}`));
-    }
-  }
+  const cartItems = cart.items;
 
-  // Deduct stock
-  for (const item of cart.items) {
-    await ProductsRepository.update(item.productId._id, {
-      stock: item.productId.stock - item.quantity,
-    });
-  }
+  // Remove synchronous stock validation and deduction
+  // This will be handled asynchronously by the worker
+
 
   // Create order items array
   const orderItems = cartItems.map((item) => ({
@@ -63,7 +38,7 @@ const createOrder = asyncHandler(async (req, res, next) => {
     return total + item.quantity * (item.productId.price || 0);
   }, 0);
 
-  // Create order
+  // Create pending order
   const order = await OrdersRepository.create({
     userId,
     items: orderItems,
@@ -72,15 +47,18 @@ const createOrder = asyncHandler(async (req, res, next) => {
     status: "pending",
   });
 
-  // Clear cart in DB
-  await CartsRepository.updateCart(cartId, []);
-  
-  // Clear cart in session
-  if (req.session) {
-    req.session.cartItems = [];
-  }
+  // Clear cart in DB immediately so user can continue shopping
+  await CartsRepository.updateCart(cart._id, []);
 
-  return sendSuccess(res, order, "Order created successfully", 201);
+  // Enqueue job for background processing
+  const queueData = {
+    orderId: order._id,
+    userId,
+    cartItems: orderItems // send formatted items with productId
+  };
+  await addOrderJob(queueData);
+
+  return sendSuccess(res, order, "Order received successfully and is being processed", 201);
 });
 
 const getOrders = asyncHandler(async (req, res, next) => {
@@ -120,12 +98,6 @@ const updateOrderStatus = [
   validateObjectId(['id'], 'params'),
   asyncHandler(async (req, res, next) => {
     const { status } = req.body;
-
-    const validStatus = ["pending", "processing", "shipped", "delivered"];
-
-    if (!validStatus.includes(status)) {
-      return next(new ApiError(400, "Invalid status"));
-    }
 
     const { id } = req.params;
     const order = await OrdersRepository.update(id, { status });

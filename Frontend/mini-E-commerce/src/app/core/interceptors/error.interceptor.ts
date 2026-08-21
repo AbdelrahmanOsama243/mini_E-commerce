@@ -73,7 +73,10 @@ export const errorInterceptor: HttpInterceptorFn = (
       }
 
       // Display backend error message if available, except for 401s which are handled above
-      if (![401, 403].includes(error.status) || isAuthEndpoint) {
+      // Also, silently ignore errors from the /refresh endpoint to avoid spamming guests on startup.
+      const isSilentRefreshError = req.url.includes('/refresh');
+      
+      if ((![401, 403].includes(error.status) || isAuthEndpoint) && !isSilentRefreshError) {
         const errorMsg =
           error.error?.message ||
           error.message ||
