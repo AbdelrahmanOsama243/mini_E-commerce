@@ -1,15 +1,17 @@
-name: Backend CI/CD (Cloudflare Workers)
+name: Backend CI (Vercel Ready)
 
 on:
   push:
     branches: [ main, master, develop ]
     paths:
       - 'Backend/**'
+      - 'vercel.json'
       - '.github/workflows/backend-ci.yml'
   pull_request:
     branches: [ main, master ]
     paths:
       - 'Backend/**'
+      - 'vercel.json'
 
 jobs:
   validate-and-test:
@@ -45,29 +47,3 @@ jobs:
 
       - name: Security Vulnerability Audit
         run: npm audit --audit-level=critical || true
-
-  deploy:
-    name: Deploy to Cloudflare Workers
-    needs: validate-and-test
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop'
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-
-      - name: Set up Node.js 20
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - name: Deploy to Cloudflare Workers via Wrangler
-        if: env.CLOUDFLARE_API_TOKEN != ''
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          workingDirectory: 'Backend'
-          command: deploy
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
