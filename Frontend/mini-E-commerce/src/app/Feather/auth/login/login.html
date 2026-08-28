@@ -29,9 +29,14 @@
 
       <!-- Password Field -->
       <div class="flex flex-col gap-2">
-        <label for="password" class="font-headline font-bold uppercase tracking-tight text-sm">
-          Password
-        </label>
+        <div class="flex justify-between items-center">
+          <label for="password" class="font-headline font-bold uppercase tracking-tight text-sm">
+            Password
+          </label>
+          <a routerLink="/forgot-password" class="font-headline font-bold text-xs uppercase text-secondary hover:underline tracking-tight">
+            Forgot Password?
+          </a>
+        </div>
         <input 
           id="password" 
           type="password" 

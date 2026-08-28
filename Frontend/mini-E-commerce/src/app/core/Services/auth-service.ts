@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable, BehaviorSubject, tap, catchError, of } from 'rxjs';
+import { Observable, BehaviorSubject, tap, catchError, of, switchMap } from 'rxjs';
 import { environment } from './environment';
 import {
   RegisterPayload,
@@ -27,42 +27,101 @@ export class AuthService {
   
   private currentAccessToken: string | null = null;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) {
+    this.restoreLocalSession();
+  }
+
+  /** Synchronously restore session from localStorage on app boot */
+  private restoreLocalSession(): void {
+    try {
+      const savedUser = localStorage.getItem('auth_user');
+      const savedToken = localStorage.getItem('access_token');
+      if (savedUser && savedToken) {
+        this.currentAccessToken = savedToken;
+        this.currentUserSubject.next(JSON.parse(savedUser));
+      }
+    } catch {
+      this.clearSession();
+    }
+  }
 
   /** Try to refresh session on startup */
   initAuth(): Observable<any> {
-    return this.refreshToken().pipe(
-      catchError(() => {
-        this.clearSession();
-        return of(null);
-      })
-    );
+    const storedRefreshToken = localStorage.getItem('refresh_token');
+    const storedToken = localStorage.getItem('access_token');
+    
+    // If no stored credentials at all, return null
+    if (!storedRefreshToken && !storedToken) {
+      return of(null);
+    }
+    
+    return this.refreshToken();
   }
 
-  /** Get current access token from memory */
+  /** Get current access token from memory or localStorage */
   getAccessToken(): string | null {
+    if (!this.currentAccessToken) {
+      this.currentAccessToken = localStorage.getItem('access_token');
+    }
     return this.currentAccessToken;
   }
 
-  /** Persist user profile and token in memory after login / register. */
-  saveSession(user: User, accessToken: string): void {
+  /** Persist user profile and token in memory and localStorage after login / register. */
+  saveSession(user: User, accessToken: string, refreshToken?: string): void {
     this.currentAccessToken = accessToken;
     this.currentUserSubject.next(user);
+    try {
+      localStorage.setItem('auth_user', JSON.stringify(user));
+      localStorage.setItem('access_token', accessToken);
+      if (refreshToken) {
+        localStorage.setItem('refresh_token', refreshToken);
+      }
+    } catch (e) {
+      console.warn('Failed to save auth session to localStorage', e);
+    }
   }
 
-  /** Remove auth keys from memory. */
+  /** Remove auth keys from memory and localStorage. */
   clearSession(): void {
     this.currentAccessToken = null;
     this.currentUserSubject.next(null);
+    try {
+      localStorage.removeItem('auth_user');
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
+    } catch {}
   }
 
-  /** Return true when a user profile is present in memory. */
+  /** Return true when a user profile is present in memory or localStorage. */
   isLoggedIn(): boolean {
-    return this.currentUserSubject.value !== null;
+    if (this.currentUserSubject.value !== null) {
+      return true;
+    }
+    const savedUser = localStorage.getItem('auth_user');
+    const savedToken = localStorage.getItem('access_token');
+    if (savedUser && savedToken) {
+      try {
+        const parsed = JSON.parse(savedUser);
+        this.currentAccessToken = savedToken;
+        this.currentUserSubject.next(parsed);
+        return true;
+      } catch {}
+    }
+    return false;
   }
 
   /** Return the stored user profile, or null when not logged in. */
   getUser(): User | null {
+    if (!this.currentUserSubject.value) {
+      const savedUser = localStorage.getItem('auth_user');
+      if (savedUser) {
+        try {
+          const parsed = JSON.parse(savedUser);
+          this.currentUserSubject.next(parsed);
+          return parsed;
+        } catch {}
+      }
+    }
     return this.currentUserSubject.value;
   }
 
@@ -94,40 +153,62 @@ export class AuthService {
 
   /** POST /api/users/login → 200 { success, message, data: { user, accessToken, refreshToken } } */
   login(payload: LoginPayload): Observable<{ success: boolean; message: string; data: LoginResponse }> {
-    return this.http.post<{ success: boolean; message: string; data: LoginResponse }>(`${this.apiUrl}/login`, payload).pipe(
-      tap(res => this.saveSession(res.data.user, res.data.accessToken))
+    return this.http.post<{ success: boolean; message: string; data: LoginResponse }>(
+      `${this.apiUrl}/login`,
+      payload,
+      { withCredentials: true }
+    ).pipe(
+      tap(res => this.saveSession(res.data.user, res.data.accessToken, res.data.refreshToken))
     );
   }
 
   /**
    * POST /api/users/logout → 200 { message }
-   * The backend will read the refreshToken from the session.
    */
   logout(): Observable<LogoutResponse> {
+    const storedRefreshToken = localStorage.getItem('refresh_token');
     return this.http.post<LogoutResponse>(
       `${this.apiUrl}/logout`,
-      {},
-      { headers: this.getAuthHeaders() }
+      { refreshToken: storedRefreshToken || undefined },
+      { headers: this.getAuthHeaders(), withCredentials: true }
     ).pipe(
       tap(() => this.clearSession())
     );
   }
 
   /** POST /api/users/refresh */
-  refreshToken(): Observable<{ success: boolean, data: { accessToken: string } }> {
-    return this.http.post<any>(`${this.apiUrl}/refresh`, {}, { withCredentials: true }).pipe(
+  refreshToken(token?: string): Observable<any> {
+    const tokenToSend = token || localStorage.getItem('refresh_token');
+    const body = tokenToSend ? { refreshToken: tokenToSend } : {};
+
+    return this.http.post<any>(`${this.apiUrl}/refresh`, body, { withCredentials: true }).pipe(
       tap((res: any) => {
-        if (res.data && res.data.accessToken) {
+        if (res?.data?.accessToken) {
           this.currentAccessToken = res.data.accessToken;
-          // After refreshing token, fetch user profile to populate memory
-          this.getMe().subscribe({
-            next: (meRes) => {
-              if (meRes.data) {
-                this.currentUserSubject.next(meRes.data as unknown as User);
-              }
-            }
-          });
+          localStorage.setItem('access_token', res.data.accessToken);
+          if (res.data.refreshToken) {
+            localStorage.setItem('refresh_token', res.data.refreshToken);
+          }
         }
+      }),
+      switchMap((res: any) => {
+        if (res?.data?.accessToken) {
+          return this.getMe().pipe(
+            tap((meRes) => {
+              if (meRes?.data) {
+                this.currentUserSubject.next(meRes.data as unknown as User);
+                localStorage.setItem('auth_user', JSON.stringify(meRes.data));
+              }
+            }),
+            catchError(() => of(null))
+          );
+        }
+        return of(null);
+      }),
+      catchError(() => {
+        // If refresh fails and token was expired/invalid, clear session
+        this.clearSession();
+        return of(null);
       })
     );
   }
@@ -157,6 +238,11 @@ export class AuthService {
   /** POST /api/users/forget-password */
   forgetPassword(email: string): Observable<{ message: string }> {
     return this.http.post<{ message: string }>(`${this.apiUrl}/forget-password`, { email });
+  }
+
+  /** POST /api/users/reset-password/:token */
+  resetPassword(token: string, password: string): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.apiUrl}/reset-password/${token}`, { password });
   }
 
   /** POST /api/users/resend-verification */

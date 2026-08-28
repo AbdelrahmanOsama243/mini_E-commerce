@@ -53,14 +53,6 @@ const closeRedisConnection = async () => {
   }
 };
 
-process.on('SIGINT', async () => {
-  await closeRedisConnection();
-});
-
-process.on('SIGTERM', async () => {
-  await closeRedisConnection();
-});
-
 module.exports = {
   ...redisInstance,
   connectRedis: () => redisInstance.connectRedis(),

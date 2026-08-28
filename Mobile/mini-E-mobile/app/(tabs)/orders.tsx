@@ -5,16 +5,19 @@ import {
   TouchableOpacity,
   RefreshControl,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import { useFocusEffect } from 'expo-router';
 import { useTheme } from '@/hooks/useThemeContext';
-import { KoshkText, KoshkCard, KoshkBadge } from '@/components/Mobile';
+import { KoshkText, KoshkCard, KoshkBadge, KoshkButton } from '@/components/Mobile';
 import { Borders, Spacing, Palette } from '@/constants/theme';
 import { OrderService, Order, OrderStatus } from '@/Services/Order.Service';
+import { PaymentService } from '@/Services/Payment.Service';
 import { AuthService } from '@/Services/Auth.Service';
 import { TokenStorage } from '@/Services/TokenStorage';
 import { Product } from '@/Services/Product.Service';
+import { useAuthStore } from '@/store/authStore';
 
 // ─── Status Styling ──────────────────────────────────────────────────────────
 
@@ -26,6 +29,13 @@ function getStatusBadge(status: OrderStatus): { variant: 'optimal' | 'new' | 'li
       return { variant: 'new', label: 'SHIPPED' };
     case 'processing':
       return { variant: 'limited', label: 'PROCESSING' };
+    case 'refunded':
+      return { variant: 'lowStock', label: 'REFUNDED' };
+    case 'partially_refunded':
+      return { variant: 'limited', label: 'PARTIAL REFUND' };
+    case 'cancelled':
+    case 'failed':
+      return { variant: 'lowStock', label: 'CANCELLED' };
     case 'pending':
     default:
       return { variant: 'lowStock', label: 'PENDING' };
@@ -38,9 +48,11 @@ const STATUS_TIMELINE: OrderStatus[] = ['pending', 'processing', 'shipped', 'del
 
 export default function OrdersScreen() {
   const { colors, isDark } = useTheme();
+  const { user } = useAuthStore();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [refundingOrderId, setRefundingOrderId] = useState<string | null>(null);
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
 
   const loadOrders = useCallback(async () => {
@@ -50,14 +62,15 @@ export default function OrdersScreen() {
         setLoading(false);
         return;
       }
-      const data = await OrderService.getOrders();
+      const isAdmin = user?.role === 'admin';
+      const data = await OrderService.getOrders(isAdmin);
       setOrders(data || []);
     } catch {
       setOrders([]);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [user]);
 
   useFocusEffect(
     useCallback(() => {
@@ -74,6 +87,36 @@ export default function OrdersScreen() {
   const toggleExpand = (orderId: string) => {
     setExpandedOrder((prev) => (prev === orderId ? null : orderId));
   };
+
+  const handleRefund = (order: Order) => {
+    Alert.alert(
+      'Issue Refund',
+      `Are you sure you want to refund $${order.totalPrice.toFixed(2)} for Order #${order._id.slice(-8).toUpperCase()}?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Refund Order',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setRefundingOrderId(order._id);
+              await PaymentService.refundPayment({
+                orderId: order._id,
+                amountCents: Math.round(order.totalPrice * 100),
+              });
+              Alert.alert('Success', 'Refund issued successfully');
+              await loadOrders();
+            } catch (err: any) {
+              Alert.alert('Refund Failed', err?.message || 'Failed to process refund');
+            } finally {
+              setRefundingOrderId(null);
+            }
+          },
+        },
+      ]
+    );
+  };
+
 
   const renderTimeline = (currentStatus: OrderStatus) => {
     const currentIdx = STATUS_TIMELINE.indexOf(currentStatus);
@@ -207,6 +250,29 @@ export default function OrdersScreen() {
               <KoshkText variant="caption" color={colors.textSecondary} style={styles.shippingAddress}>
                 Ship to: {item.shippingAddress}
               </KoshkText>
+
+              {/* Refund Details if refunded */}
+              {(item.refundedAmount ?? 0) > 0 && (
+                <View style={[styles.refundBadgeContainer, { backgroundColor: colors.surface }]}>
+                  <KoshkText variant="caption" bold color={Palette.danger}>
+                    REFUNDED: ${item.refundedAmount?.toFixed(2)}
+                  </KoshkText>
+                </View>
+              )}
+
+              {/* Admin Action: Issue Refund */}
+              {user?.role === 'admin' && item.status !== 'refunded' && (
+                <View style={styles.adminActionContainer}>
+                  <KoshkButton
+                    title={refundingOrderId === item._id ? "PROCESSING REFUND..." : "ISSUE REFUND"}
+                    variant="danger"
+                    fullWidth
+                    disabled={refundingOrderId === item._id}
+                    onPress={() => handleRefund(item)}
+                    style={styles.refundButton}
+                  />
+                </View>
+              )}
             </View>
           )}
 
@@ -350,6 +416,23 @@ const styles = StyleSheet.create({
   shippingAddress: {
     marginTop: Spacing.md,
   },
+  refundBadgeContainer: {
+    marginTop: Spacing.sm,
+    padding: Spacing.sm,
+    borderWidth: 1,
+    borderColor: Palette.danger,
+    borderRadius: Borders.radius.xs,
+    alignItems: 'center',
+  },
+  adminActionContainer: {
+    marginTop: Spacing.md,
+    paddingTop: Spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: '#e0e0e0',
+  },
+  refundButton: {
+    marginTop: Spacing.xs,
+  },
   expandIndicator: {
     alignItems: 'center',
     marginTop: Spacing.sm,
@@ -360,3 +443,4 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
   },
 });
+

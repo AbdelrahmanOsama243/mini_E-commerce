@@ -38,12 +38,14 @@ export const errorInterceptor: HttpInterceptorFn = (
           return authService.refreshToken().pipe(
             switchMap((tokenResponse: any) => {
               isRefreshing = false;
-              const data = tokenResponse.data ?? tokenResponse;
-              refreshTokenSubject.next(data.accessToken);
+              const newAccessToken = authService.getAccessToken() || tokenResponse?.data?.accessToken || tokenResponse?.accessToken;
+              if (newAccessToken) {
+                refreshTokenSubject.next(newAccessToken);
+              }
 
               const clonedReq = req.clone({
                 setHeaders: {
-                  Authorization: `Bearer ${data.accessToken}`,
+                  Authorization: `Bearer ${newAccessToken || ''}`,
                 },
               });
               return next(clonedReq);

@@ -12,12 +12,16 @@ const { notFound, errorHandler } = require("./Middlewares/error.middleware");
 //const { authentication } = require("./Middlewares/auth.middleware");
 const sessionMiddleware = require("./Middlewares/session.middleware");
 const redisInstance = require("./Config/Redis");
+const { closeAllBullMQConnections } = require("./Config/ioredis");
 const logger = require("./Config/logger");
 const { startEmailWorker, stopEmailWorker } = require("./Jobs/email.worker");
 const { startOrderWorker, stopOrderWorker } = require("./Jobs/order.worker");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Trust proxy (required for ngrok, reverse proxies, and rate-limiting by client IP)
+app.set("trust proxy", 1);
 
 // Security headers
 app.use(helmet());
@@ -45,7 +49,8 @@ app.use(cors({
   },
   credentials: true
 }));
-app.use(express.json());
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use(cookieParser());
 app.use(sessionMiddleware);
 
@@ -56,7 +61,7 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use(pinoHttp({
   logger,
   autoLogging: {
-    ignore: (req) => req.url === "/" || req.url === "/favicon.ico",
+    ignore: (req) => req.url === "/" || req.url === "/api/health" || req.url === "/favicon.ico",
   },
 }));
 
@@ -70,20 +75,40 @@ const userRoutes = require("./routes/user.routes");
 const productRoutes = require("./routes/product.routes");
 const cartRoutes = require("./routes/cart.routes");
 const orderRoutes = require("./routes/order.routes");
+const paymentRoutes = require("./routes/payment.routes");
 
 // Routes
 app.get("/", (req, res) => {
   res.send("Mini E-Commerce API is running...");
 });
 
+// Health check endpoint for load balancers and monitoring
+app.get("/api/health", (req, res) => {
+  const mongoStatus = mongoose.connection.readyState === 1 ? "connected" : "disconnected";
+  const redisStatus = redisInstance.redisClient?.isReady ? "ready" : "disconnected";
+
+  const isHealthy = mongoStatus === "connected";
+  return res.status(isHealthy ? 200 : 503).json({
+    status: isHealthy ? "healthy" : "degraded",
+    uptime: Math.floor(process.uptime()),
+    timestamp: new Date().toISOString(),
+    services: {
+      database: mongoStatus,
+      redis: redisStatus,
+    },
+  });
+});
+
 app.use("/api/users/login", authLimiter);
 app.use("/api/users/register", authLimiter);
 app.use("/api/users/forget-password", authLimiter);
+app.use("/api/users/reset-password", authLimiter);
 
 app.use("/api/users", userRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/orders", orderRoutes);
+app.use("/api/payment", paymentRoutes);
 
 // Error Middleware (should be after all routes)
 app.use(notFound);
@@ -116,43 +141,33 @@ const initiate = async () => {
 const gracefulShutdown = async (signal) => {
   logger.info(`${signal} received. Starting graceful shutdown...`);
 
-  // Stop background workers first to prevent new jobs from processing
-  await stopEmailWorker();
-  await stopOrderWorker();
-
-  // Close database connections gracefully
-  await closeMongoDBConnection();
-  await redisInstance.closeRedisConnection();
-
   if (server) {
     server.close(() => {
-      logger.info("HTTP server closed");
+      logger.info("HTTP server closed to new connections");
     });
   }
 
-  try {
-    await mongoose.connection.close();
-    logger.info("MongoDB connection closed");
-  } catch (err) {
-    logger.error({ err }, "Error closing MongoDB connection");
-  }
-
-  try {
-    if (redisInstance.redisClient && redisInstance.redisClient.isReady) {
-      await redisInstance.redisClient.quit();
-      logger.info("Redis connection closed");
-    }
-  } catch (err) {
-    logger.error({ err }, "Error closing Redis connection");
-  }
-
+  // Stop background workers
   try {
     await stopEmailWorker();
-    logger.info("Email worker stopped");
+    await stopOrderWorker();
+    logger.info("Background queue workers stopped gracefully");
   } catch (err) {
-    logger.error({ err }, "Error stopping email worker");
+    logger.error({ err: err.message }, "Error stopping queue workers");
   }
 
+  // Close BullMQ connections
+  try {
+    await closeAllBullMQConnections();
+  } catch (err) {
+    logger.error({ err: err.message }, "Error closing BullMQ connections");
+  }
+
+  // Close database connections gracefully
+  await redisInstance.closeRedisConnection();
+  await closeMongoDBConnection();
+
+  logger.info("Graceful shutdown finished. Exiting process.");
   process.exit(0);
 };
 

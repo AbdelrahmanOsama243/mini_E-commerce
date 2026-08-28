@@ -1,10 +1,9 @@
-import { BASE_URL } from '../constants/baseUrl';
 import { handleApiResponse, handleCentralError, ApiResponse } from '../Utils/errorHandler';
 import { Product } from './Product.Service';
 import { User } from './Auth.Service';
 import axiosInstance from '../core/interceptors/HttpTokenInterceptor/HttpTokenInterceptor';
 
-export type OrderStatus = 'pending' | 'processing' | 'shipped' | 'delivered' | string;
+export type OrderStatus = 'pending' | 'paid' | 'processing' | 'shipped' | 'delivered' | 'failed' | 'cancelled' | 'refunded' | 'partially_refunded' | string;
 
 export interface OrderItem {
   _id?: string;
@@ -20,6 +19,11 @@ export interface Order {
   shippingAddress: string;
   totalPrice: number;
   status: OrderStatus;
+  paymentMethod: 'card' | 'wallet' | 'kiosk' | 'valu' | 'cod';
+  paymobOrderId?: string;
+  transactionId?: string;
+  fawryReferenceNumber?: string;
+  refundedAmount?: number;
   createdAt?: string;
   updatedAt?: string;
 }

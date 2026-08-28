@@ -1,4 +1,3 @@
-import { BASE_URL } from '../constants/baseUrl';
 import { handleApiResponse, handleCentralError, ApiResponse } from '../Utils/errorHandler';
 import axiosInstance from '../core/interceptors/HttpTokenInterceptor/HttpTokenInterceptor';
 

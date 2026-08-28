@@ -1,4 +1,3 @@
-import { BASE_URL } from "../constants/baseUrl";
 import {
   handleApiResponse,
   handleCentralError,

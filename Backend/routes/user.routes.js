@@ -12,6 +12,8 @@ router.post("/login", validateZod(authSchemas.login), userController.login);
 router.post("/logout", userController.logout);
 router.post("/refresh", userController.refresh);
 router.post("/forget-password", validateZod(authSchemas.forgetPassword), userController.forgetPassword);
+router.post("/reset-password/:token", userController.resetPassword);
+router.post("/reset-password", userController.resetPassword);
 router.get("/me", authentication, userController.getMe);
 router.put("/me", authentication, validateZod(authSchemas.updateUserProfile), userController.updateUserProfile);
 router.get("/verify-email/:token", userController.verifyEmail);

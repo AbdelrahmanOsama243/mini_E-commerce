@@ -99,12 +99,13 @@ const cartSchemas = {
 const orderSchemas = {
   createOrder: {
     body: z.object({
-      shippingAddress: z.string({ required_error: "Shipping address is required" }).min(1, "Shipping address is required")
+      shippingAddress: z.string({ required_error: "Shipping address is required" }).min(1, "Shipping address is required"),
+      paymentMethod: z.enum(['card', 'wallet', 'kiosk', 'valu', 'cod'], { required_error: "Payment method is required" })
     })
   },
   updateOrderStatus: {
     body: z.object({
-      status: z.enum(["pending", "processing", "shipped", "delivered"], { 
+      status: z.enum(["pending", "processing", "shipped", "delivered", "payment_failed", "refunded"], { 
         required_error: "Invalid status", 
         invalid_type_error: "Invalid status" 
       })

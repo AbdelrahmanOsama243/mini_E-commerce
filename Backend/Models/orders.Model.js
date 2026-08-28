@@ -33,12 +33,36 @@ const orderSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['pending', 'processing', 'shipped', 'delivered'],
+      enum: ['pending', 'paid', 'processing', 'shipped', 'delivered', 'payment_failed', 'failed', 'cancelled', 'refunded', 'partially_refunded'],
       default: 'pending'
     },
     shippingAddress: {
       type: String,
       required: true
+    },
+    paymentMethod: {
+      type: String,
+      enum: ['card', 'wallet', 'kiosk', 'valu', 'cod'],
+      required: true,
+      default: 'cod'
+    },
+    paymentStatus: {
+      type: String,
+      enum: ['pending', 'paid', 'failed', 'refunded', 'partially_refunded'],
+      default: 'pending'
+    },
+    paymobOrderId: {
+      type: Number
+    },
+    transactionId: {
+      type: String
+    },
+    refundedAmount: {
+      type: Number,
+      default: 0
+    },
+    fawryRef: {
+      type: String
     }
   },
   {

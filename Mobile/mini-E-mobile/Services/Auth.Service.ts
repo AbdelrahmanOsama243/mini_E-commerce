@@ -1,4 +1,3 @@
-import { BASE_URL } from '../constants/baseUrl';
 import { handleApiResponse, handleCentralError, AppError, ApiResponse } from '../Utils/errorHandler';
 import { CartService } from './Cart.Service';
 import axiosInstance from '../core/interceptors/HttpTokenInterceptor/HttpTokenInterceptor';
@@ -272,6 +271,18 @@ export const AuthService = {
   async forgetPassword(email: string): Promise<null> {
     try {
       const response = await axiosInstance.post<ApiResponse<null>>('/users/forget-password', { email });
+      return await handleApiResponse<null>(response);
+    } catch (error) {
+      throw handleCentralError(error);
+    }
+  },
+
+  /**
+   * Reset password via token.
+   */
+  async resetPassword(token: string, password: string): Promise<null> {
+    try {
+      const response = await axiosInstance.post<ApiResponse<null>>(`/users/reset-password/${token}`, { password });
       return await handleApiResponse<null>(response);
     } catch (error) {
       throw handleCentralError(error);

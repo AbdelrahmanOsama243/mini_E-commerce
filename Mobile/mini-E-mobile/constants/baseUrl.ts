@@ -15,16 +15,19 @@ if (debuggerHost) {
 if (process.env.EXPO_PUBLIC_API_URL) {
   baseURL = process.env.EXPO_PUBLIC_API_URL;
 } 
-// Priority 2: Use Expo's LAN IP if available (Expo Go)
+// Priority 2: Use Expo's LAN IP if available (Expo Go / Dev Client)
 else if (computerIp) {
   baseURL = `http://${computerIp}:3000/api`;
 } 
 // Priority 3: Fallbacks for emulators/web
 else {
   baseURL = Platform.select({
-    android: 'http://192.168.1.105:3000/api', 
+    android: 'http://10.0.2.2:3000/api', // Standard Android Emulator loopback
+    ios: 'http://localhost:3000/api', 
     default: 'http://localhost:3000/api', 
   }) as string;
 }
 
+// NGROK_OVERRIDE
+baseURL = 'https://retype-pesky-prowling.ngrok-free.dev/api';
 export const BASE_URL = baseURL;

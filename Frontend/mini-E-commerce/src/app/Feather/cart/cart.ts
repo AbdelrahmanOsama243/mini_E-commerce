@@ -1,10 +1,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
 import { CartService } from '../../core/Services/cart-service';
 import { ToastService } from '../../shared/toast/toast.service';
-import { LoadingSpinnerComponent } from '../../shared/loading-spinner/loading-spinner';
-import { Cart, CartItem } from '../../Models/icart';
+import { Cart } from '../../Models/icart';
 
 @Component({
   selector: 'app-cart',
@@ -18,6 +15,9 @@ export class CartComponent implements OnInit {
 
   public cart = signal<Cart | null>(null);
   public loading = signal(false);
+
+  readonly SHIPPING_COST = 9.99;
+  readonly TAX_RATE = 0.08;
 
   ngOnInit(): void {
     this.loadCart();
@@ -45,12 +45,17 @@ export class CartComponent implements OnInit {
     }, 0);
   }
 
+  tax(): number {
+    return Number((this.subtotal() * this.TAX_RATE).toFixed(2));
+  }
+
   shipping(): number {
-    return this.subtotal() > 150 ? 0 : 10;
+    const currentCart = this.cart();
+    return currentCart?.items?.length ? this.SHIPPING_COST : 0;
   }
 
   total(): number {
-    return this.subtotal() + this.shipping();
+    return Number((this.subtotal() + this.shipping() + this.tax()).toFixed(2));
   }
 
   updateQty(itemId: string, qty: number, stock: number) {

@@ -118,6 +118,13 @@ export default function LoginScreen() {
             secureTextEntry
             autoCapitalize="none"
           />
+          <View style={{ alignItems: 'flex-end', marginBottom: Spacing.sm, marginTop: Spacing.xs }}>
+            <Link href="/(auth)/forgot-password">
+              <KoshkText variant="caption" color={colors.primary} bold>
+                Forgot Password?
+              </KoshkText>
+            </Link>
+          </View>
           <KoshkButton
             title="SIGN IN"
             variant="primary"

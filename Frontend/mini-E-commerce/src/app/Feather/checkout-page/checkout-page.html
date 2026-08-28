@@ -11,38 +11,95 @@
   </h1>
 
   <div class="grid grid-cols-1 lg:grid-cols-12 gap-12">
-    <!-- Address Form (Left Column) -->
+    <!-- Payment & Address Form (Left Column) -->
     <section class="lg:col-span-7 flex flex-col gap-6">
+      
+      <!-- Payment Method Selection -->
+      <div class="bg-surface-container brutalist-border p-6 brutalist-shadow">
+        <h3 class="font-headline font-black text-2xl uppercase mb-4 border-b-2 border-primary pb-2">
+          Payment Method
+        </h3>
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+          <button type="button" (click)="selectMethod('card')" [class.bg-primary]="selectedPaymentMethod() === 'card'" [class.text-on-primary]="selectedPaymentMethod() === 'card'" class="brutalist-border p-3 font-headline font-bold uppercase text-sm hover:bg-primary/20 transition-colors flex items-center justify-center gap-2">
+            <span class="material-symbols-outlined">credit_card</span>
+            Card
+          </button>
+          
+          <button type="button" (click)="selectMethod('wallet')" [class.bg-primary]="selectedPaymentMethod() === 'wallet'" [class.text-on-primary]="selectedPaymentMethod() === 'wallet'" class="brutalist-border p-3 font-headline font-bold uppercase text-sm hover:bg-primary/20 transition-colors flex items-center justify-center gap-2">
+            <span class="material-symbols-outlined">account_balance_wallet</span>
+            Wallet
+          </button>
+          
+          <button type="button" (click)="selectMethod('kiosk')" [class.bg-primary]="selectedPaymentMethod() === 'kiosk'" [class.text-on-primary]="selectedPaymentMethod() === 'kiosk'" class="brutalist-border p-3 font-headline font-bold uppercase text-sm hover:bg-primary/20 transition-colors flex items-center justify-center gap-2">
+            <span class="material-symbols-outlined">storefront</span>
+            Fawry
+          </button>
+          
+          <button type="button" (click)="selectMethod('valu')" [class.bg-primary]="selectedPaymentMethod() === 'valu'" [class.text-on-primary]="selectedPaymentMethod() === 'valu'" class="brutalist-border p-3 font-headline font-bold uppercase text-sm hover:bg-primary/20 transition-colors flex items-center justify-center gap-2">
+            <span class="material-symbols-outlined">pie_chart</span>
+            ValU
+          </button>
+          
+          <button type="button" (click)="selectMethod('cod')" [disabled]="!hasSavedMethods()" [class.opacity-50]="!hasSavedMethods()" [class.bg-primary]="selectedPaymentMethod() === 'cod'" [class.text-on-primary]="selectedPaymentMethod() === 'cod'" class="brutalist-border p-3 font-headline font-bold uppercase text-sm hover:bg-primary/20 transition-colors flex items-center justify-center gap-2 relative group col-span-2 md:col-span-1">
+            <span class="material-symbols-outlined">local_shipping</span>
+            COD
+            @if (!hasSavedMethods()) {
+              <div class="absolute -top-10 left-1/2 -translate-x-1/2 bg-black text-white text-xs p-2 rounded hidden group-hover:block whitespace-nowrap">
+                Requires saved card/wallet
+              </div>
+            }
+          </button>
+        </div>
+      </div>
+
       <div class="bg-surface-container brutalist-border p-8 brutalist-shadow">
         <h3 class="font-headline font-black text-2xl uppercase mb-6 border-b-2 border-primary pb-2">
-          Shipping Address
+          Customer & Delivery Details
         </h3>
 
-        <form [formGroup]="addressForm" (ngSubmit)="onSubmit()" class="flex flex-col gap-6">
+        <form [formGroup]="checkoutForm" (ngSubmit)="onSubmit()" class="flex flex-col gap-6">
+          
+          <!-- First Name & Last Name (Always Required) -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="flex flex-col gap-2">
+              <label class="font-headline font-bold uppercase tracking-tight text-sm">First Name *</label>
+              <input type="text" formControlName="firstName" placeholder="e.g. Ahmed" class="brutalist-border p-3 font-body bg-background outline-none text-sm">
+              @if (submitted && f['firstName'].errors) {
+                <span class="text-secondary font-bold text-xs uppercase">First name is required (min 2 letters).</span>
+              }
+            </div>
+            <div class="flex flex-col gap-2">
+              <label class="font-headline font-bold uppercase tracking-tight text-sm">Last Name *</label>
+              <input type="text" formControlName="lastName" placeholder="e.g. Ali" class="brutalist-border p-3 font-body bg-background outline-none text-sm">
+              @if (submitted && f['lastName'].errors) {
+                <span class="text-secondary font-bold text-xs uppercase">Last name is required (min 2 letters).</span>
+              }
+            </div>
+          </div>
+
+          <!-- Phone Number (Always Required) -->
+          <div class="flex flex-col gap-2">
+            <label class="font-headline font-bold uppercase tracking-tight text-sm">Phone Number (Egyptian Mobile) *</label>
+            <input type="tel" formControlName="phone" placeholder="e.g. 01012345678" class="brutalist-border p-3 font-body bg-background outline-none text-sm">
+            @if (submitted && f['phone'].errors) {
+              <span class="text-secondary font-bold text-xs uppercase">Valid 11-digit Egyptian phone number required (e.g. 01012345678).</span>
+            }
+          </div>
+
+          <!-- Shipping Address (Always Required) -->
           <div class="flex flex-col gap-2">
             <label for="address" class="font-headline font-bold uppercase tracking-tight text-sm">
-              Street Address
+              Shipping Address *
             </label>
-            <textarea 
-              id="address" 
-              formControlName="shippingAddress"
-              rows="3"
-              class="brutalist-border p-3 font-body bg-background focus:ring-0 focus:border-secondary outline-none text-sm"
-              placeholder="e.g. 123 Designer Street, New Cairo, Egypt"
-            ></textarea>
+            <textarea id="address" formControlName="shippingAddress" rows="3" class="brutalist-border p-3 font-body bg-background focus:ring-0 focus:border-secondary outline-none text-sm" placeholder="e.g. 123 Designer Street, Nasr City, Cairo, Egypt"></textarea>
             @if (submitted && f['shippingAddress'].errors) {
-              <span class="text-secondary font-bold text-xs uppercase tracking-tight">
-                Shipping address is required to place your order.
-              </span>
+              <span class="text-secondary font-bold text-xs uppercase tracking-tight">Shipping address is required (minimum 5 characters).</span>
             }
           </div>
 
           <!-- Place Order Button -->
-          <button 
-            type="submit" 
-            class="w-full py-4 bg-primary text-on-primary text-xl brutalist-button brutalist-shadow brutalist-shadow-hover"
-          >
-            Place Order
+          <button type="submit" class="w-full py-4 mt-4 bg-primary text-on-primary text-xl font-black uppercase brutalist-button brutalist-shadow brutalist-shadow-hover">
+            {{ selectedPaymentMethod() === 'cod' ? 'Place Order (Cash on Delivery)' : 'Proceed to Payment' }}
           </button>
         </form>
       </div>
@@ -50,7 +107,7 @@
 
     <!-- Order Summary Review (Right Column) -->
     <aside class="lg:col-span-5 w-full">
-      <div class="bg-surface-container-high border-4 border-primary p-6 brutalist-shadow flex flex-col gap-6">
+      <div class="bg-surface-container-high border-4 border-primary p-6 brutalist-shadow flex flex-col gap-6 sticky top-24">
         <h3 class="font-headline font-black text-2xl uppercase border-b-2 border-primary pb-2">
           Review Order
         </h3>
@@ -73,16 +130,16 @@
         <!-- Price Calculations -->
         <div class="flex flex-col gap-3 font-headline font-bold text-sm border-t-2 border-primary pt-4">
           <div class="flex justify-between">
-            <span class="uppercase opacity-70">Subtotal</span>
+            <span class="text-on-surface-variant uppercase">Subtotal</span>
             <span>${{ subtotal() }}</span>
           </div>
           <div class="flex justify-between">
-            <span class="uppercase opacity-70">Shipping</span>
-            <span>${{ shipping() }}</span>
+            <span class="text-on-surface-variant uppercase">Shipping</span>
+            <span>{{ shipping() === 0 ? 'FREE' : '$' + shipping() }}</span>
           </div>
-          <div class="border-t-2 border-primary pt-3 flex justify-between text-lg font-black">
+          <div class="flex justify-between text-xl font-black border-t-2 border-primary pt-3">
             <span class="uppercase">Total</span>
-            <span>${{ total() }}</span>
+            <span class="text-primary">${{ total() }}</span>
           </div>
         </div>
       </div>

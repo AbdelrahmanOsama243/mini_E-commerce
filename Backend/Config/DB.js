@@ -22,7 +22,7 @@ class Database {
 
 const dbInstance = new Database();
 
-// Graceful shutdown for MongoDB connection
+// Graceful shutdown helper for MongoDB connection
 const closeMongoDBConnection = async () => {
   try {
     await mongoose.connection.close();
@@ -31,14 +31,6 @@ const closeMongoDBConnection = async () => {
     logger.error({ err: err.message }, "Error closing MongoDB connection.");
   }
 };
-
-process.on('SIGINT', async () => {
-  await closeMongoDBConnection();
-});
-
-process.on('SIGTERM', async () => {
-  await closeMongoDBConnection();
-});
 
 module.exports = {
   connect: () => dbInstance.connect(),

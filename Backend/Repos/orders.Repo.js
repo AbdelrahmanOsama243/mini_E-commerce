@@ -5,7 +5,7 @@ const redisRepo = require('./Redis.Repo');
 class OrdersRepository extends BaseRepo {
   constructor() {
     super(Order);
-    this.allowedUpdates = ['status', 'shippingAddress'];
+    this.allowedUpdates = ['status', 'shippingAddress', 'paymentStatus', 'fawryRef'];
     this.allowedPopulates = ['items.productId'];
   }
 

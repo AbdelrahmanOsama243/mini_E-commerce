@@ -34,13 +34,12 @@ export class HomeComponent implements OnInit {
             const items = Array.isArray(res.data) ? res.data : (res.data?.items || []);
             this.featuredProducts.set(items);
           }
-        } catch (e) {
-          console.error('Error processing featured products', e);
+        } catch {
+          // Graceful handling of empty or unexpected payload
         }
         this.loading.set(false);
       },
-      error: (err) => {
-        console.error('Error fetching featured products', err);
+      error: () => {
         this.loading.set(false);
       },
     });

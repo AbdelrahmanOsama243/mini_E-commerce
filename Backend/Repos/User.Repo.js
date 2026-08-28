@@ -33,6 +33,10 @@ class UserRepository extends BaseRepo {
   async findUserById(id) {
     return await this.findById(id, { select: "-password" });
   }
+
+  async updatePassword(id, hashedPassword) {
+    return await this.model.findByIdAndUpdate(id, { password: hashedPassword }, { new: true });
+  }
 }
 
 module.exports = new UserRepository();

@@ -17,9 +17,6 @@ export class App {
   public showNavbar = true;
 
   constructor() {
-    // Attempt to silently refresh token on app load
-    this.authService.initAuth().subscribe();
-
     this.router.events
       .pipe(
         filter((event) => event instanceof NavigationEnd),

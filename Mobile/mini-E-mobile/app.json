@@ -40,7 +40,8 @@
         }
       ],
       "expo-font",
-      "expo-secure-store"
+      "expo-secure-store",
+      "./plugins/withPaymobAndroidDataBinding"
     ],
     "experiments": {
       "typedRoutes": true,

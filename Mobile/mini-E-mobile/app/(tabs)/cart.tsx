@@ -67,30 +67,13 @@ export default function CartScreen() {
     }
   };
 
-  const handleCheckout = async () => {
-    if (!isCheckingOut) {
-      setIsCheckingOut(true);
+  const handleCheckout = () => {
+    if (items.length === 0) {
+      Alert.alert("Error", "Your cart is empty");
       return;
     }
-
-    if (!address.trim()) {
-      Alert.alert("Error", "Please enter a shipping address");
-      return;
-    }
-
-    setCheckoutLoading(true);
-    try {
-      await OrderService.createOrder({ shippingAddress: address });
-      await storeClearCart();
-      setIsCheckingOut(false);
-      setAddress("");
-      Alert.alert("Success", "Your order has been placed successfully!");
-      router.push("/(tabs)/orders");
-    } catch (err: any) {
-      Alert.alert("Error", err.message || "Failed to place order");
-    } finally {
-      setCheckoutLoading(false);
-    }
+    // Navigate to the new payment checkout screen
+    router.push("../../../payment/checkout");
   };
 
   const clearCart = async () => {

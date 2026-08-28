@@ -51,7 +51,7 @@
                   <span class="font-label uppercase tracking-widest text-xs font-bold text-secondary mb-1 block">
                     {{ item.productId.category }}
                   </span>
-                  <h2 class="font-headline text-2xl font-black uppercase leading-none mb-2 pr-8">
+                  <h2 class="font-headline text-2xl font-black uppercase leading-none mb-2 pr-8 text-primary">
                     {{ item.productId.name }}
                   </h2>
                   <p class="font-body text-on-surface-variant text-sm mb-4 max-w-md line-clamp-2">
@@ -61,28 +61,28 @@
 
                 <!-- Price & Quantity Adjuster -->
                 <div class="flex flex-wrap items-end justify-between gap-4 mt-auto">
-                  <div class="font-headline text-2xl font-black tracking-tighter">
+                  <div class="font-headline text-2xl font-black tracking-tighter text-primary">
                     ${{ item.productId.price }}
                   </div>
                   
                   <!-- Quantity Controls -->
-                  <div class="flex border-4 border-primary h-12 bg-white brutalist-shadow-sm">
+                  <div class="flex border-4 border-primary h-12 bg-surface-container-highest brutalist-shadow-sm">
                     <button 
                       (click)="updateQty(item._id!, item.quantity - 1, item.productId.stock)" 
                       [disabled]="item.quantity <= 1"
                       aria-label="Decrease quantity" 
-                      class="w-10 h-full flex items-center justify-center hover:bg-primary-container border-r-4 border-primary font-bold text-xl transition-colors disabled:opacity-50"
+                      class="w-10 h-full flex items-center justify-center text-primary hover:bg-primary hover:text-on-primary border-r-4 border-primary font-bold text-xl transition-colors disabled:opacity-50"
                     >
                       <span class="material-symbols-outlined">remove</span>
                     </button>
-                    <div class="w-12 h-full flex items-center justify-center font-headline font-black text-lg">
+                    <div class="w-12 h-full flex items-center justify-center font-headline font-black text-lg text-primary">
                       {{ item.quantity }}
                     </div>
                     <button 
                       (click)="updateQty(item._id!, item.quantity + 1, item.productId.stock)" 
                       [disabled]="item.quantity >= item.productId.stock"
                       aria-label="Increase quantity" 
-                      class="w-10 h-full flex items-center justify-center hover:bg-primary-container border-l-4 border-primary font-bold text-xl transition-colors disabled:opacity-50"
+                      class="w-10 h-full flex items-center justify-center text-primary hover:bg-primary hover:text-on-primary border-l-4 border-primary font-bold text-xl transition-colors disabled:opacity-50"
                     >
                       <span class="material-symbols-outlined">add</span>
                     </button>
@@ -97,7 +97,7 @@
       <!-- Clear Cart button -->
       <button 
         (click)="clearCart()"
-        class="self-start py-2 px-4 bg-transparent border-2 border-primary font-headline uppercase font-bold text-xs hover:bg-secondary hover:text-on-primary transition-colors brutalist-shadow-sm brutalist-shadow-hover-sm mb-8"
+        class="self-start py-2 px-4 bg-transparent border-2 border-primary text-primary font-headline uppercase font-bold text-xs hover:bg-secondary hover:text-white transition-colors brutalist-shadow-sm brutalist-shadow-hover-sm mb-8"
       >
         Clear Cart
       </button>
@@ -115,15 +115,19 @@
         <div class="flex flex-col gap-3 font-headline font-bold text-sm">
           <div class="flex justify-between">
             <span class="uppercase opacity-70">Subtotal</span>
-            <span>${{ subtotal() }}</span>
+            <span>${{ subtotal().toFixed(2) }}</span>
           </div>
           <div class="flex justify-between">
             <span class="uppercase opacity-70">Shipping</span>
-            <span>${{ shipping() }}</span>
+            <span>${{ shipping().toFixed(2) }}</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="uppercase opacity-70">Tax (8%)</span>
+            <span>${{ tax().toFixed(2) }}</span>
           </div>
           <div class="border-t-2 border-primary pt-3 flex justify-between text-lg font-black">
             <span class="uppercase">Total</span>
-            <span>${{ total() }}</span>
+            <span>${{ total().toFixed(2) }}</span>
           </div>
         </div>
 

@@ -44,7 +44,10 @@
                   'bg-primary-container text-primary': order.status === 'pending',
                   'bg-tertiary-container text-primary': order.status === 'processing',
                   'bg-tertiary text-on-tertiary': order.status === 'shipped',
-                  'bg-surface-dim text-primary': order.status === 'delivered'
+                  'bg-surface-dim text-primary': order.status === 'delivered',
+                  'bg-error text-on-error': order.status === 'payment_failed' || order.status === 'failed' || order.status === 'refunded',
+                  'bg-warning text-on-warning': order.status === 'partially_refunded',
+                  'bg-surface-variant text-on-surface-variant': order.status === 'cancelled'
                 }"
               >
                 {{ order.status }}

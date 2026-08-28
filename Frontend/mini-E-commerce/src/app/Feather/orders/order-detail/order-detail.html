@@ -1,4 +1,4 @@
-<app-loading-spinner [visible]="loading()"></app-loading-spinner>
+<app-loading-spinner [visible]="loading() || refundProcessing()"></app-loading-spinner>
     
 <main class="flex-grow container mx-auto px-6 py-12 max-w-4xl flex flex-col gap-6">
   <a routerLink="/orders" class="font-headline font-bold uppercase text-sm hover:text-secondary flex items-center gap-2 self-start">
@@ -27,13 +27,30 @@
               'bg-primary-container text-primary': ord.status === 'pending',
               'bg-tertiary-container text-primary': ord.status === 'processing',
               'bg-tertiary text-on-tertiary': ord.status === 'shipped',
-              'bg-surface-dim text-primary': ord.status === 'delivered'
+              'bg-surface-dim text-primary': ord.status === 'delivered',
+              'bg-error text-on-error': ord.status === 'refunded',
+              'bg-warning text-on-warning': ord.status === 'partially_refunded'
             }"
           >
             {{ ord.status }}
           </span>
         </div>
       </div>
+
+      <!-- Refund Alert Banner if applicable -->
+      @if (ord.status === 'refunded' || ord.status === 'partially_refunded' || (ord.refundedAmount && ord.refundedAmount > 0)) {
+        <div class="bg-surface-container border-4 border-primary p-4 brutalist-shadow flex items-center gap-3">
+          <span class="material-symbols-outlined text-3xl font-bold text-error">currency_exchange</span>
+          <div>
+            <h4 class="font-headline font-black uppercase text-sm">
+              {{ ord.status === 'partially_refunded' ? 'Partial Refund Issued' : 'Refund Issued' }}
+            </h4>
+            <p class="font-body text-xs text-on-surface-variant">
+              Refunded Amount: <strong>\${{ ord.refundedAmount || ord.totalPrice }}</strong>
+            </p>
+          </div>
+        </div>
+      }
 
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         <!-- Details & Items (Left Column) -->
@@ -96,10 +113,17 @@
               <span class="text-sm uppercase font-bold opacity-60">Total Paid</span>
               <span>\${{ ord.totalPrice }}</span>
             </div>
+            @if (ord.refundedAmount && ord.refundedAmount > 0) {
+              <div class="flex justify-between items-center font-headline font-bold text-sm text-error border-t border-primary/20 pt-2">
+                <span>Total Refunded</span>
+                <span>-\${{ ord.refundedAmount }}</span>
+              </div>
+            }
           </div>
 
-          <!-- Admin Status Modifier -->
+          <!-- Admin Actions -->
           @if (isAdmin()) {
+            <!-- Admin Status Modifier -->
             <div class="bg-primary-container border-4 border-primary p-6 brutalist-shadow flex flex-col gap-4">
               <h3 class="font-headline font-black text-xl uppercase border-b-2 border-primary pb-2 text-primary">
                 Update Status
@@ -124,9 +148,73 @@
                 </button>
               </div>
             </div>
+
+            <!-- Admin Refund Trigger -->
+            @if (ord.status !== 'refunded') {
+              <div class="bg-surface-container border-4 border-primary p-6 brutalist-shadow flex flex-col gap-3">
+                <h3 class="font-headline font-black text-xl uppercase border-b-2 border-primary pb-2">
+                  Payment Refund
+                </h3>
+                <p class="font-body text-xs text-on-surface-variant">
+                  Issue a full or partial refund to the customer via Paymob.
+                </p>
+                <button 
+                  (click)="openRefundModal()"
+                  class="w-full py-3 bg-error text-on-error font-headline uppercase font-black text-sm brutalist-button brutalist-shadow-sm brutalist-shadow-hover-sm"
+                >
+                  Issue Refund
+                </button>
+              </div>
+            }
           }
         </aside>
       </div>
     </div>
+
+    <!-- Refund Modal -->
+    @if (refundModalOpen()) {
+      <div class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+        <div class="bg-background border-4 border-primary shadow-[8px_8px_0px_0px_#1a1a1a] max-w-md w-full p-6 flex flex-col gap-6">
+          <div class="flex justify-between items-center border-b-2 border-primary pb-2">
+            <h3 class="font-headline font-black uppercase text-xl text-primary">Issue Refund</h3>
+            <button (click)="closeRefundModal()" class="text-2xl font-bold font-headline">&times;</button>
+          </div>
+
+          <p class="font-body text-xs text-on-surface-variant">
+            Refund will be processed through Paymob gateway for <strong>Order #{{ ord._id.slice(-8) }}</strong>.
+          </p>
+
+          <div class="flex flex-col gap-2">
+            <label class="font-headline font-bold uppercase text-xs">Refund Amount (\$) (Max: \${{ ord.totalPrice }})</label>
+            <input 
+              type="number" 
+              [(ngModel)]="refundAmount" 
+              [max]="ord.totalPrice"
+              min="1"
+              step="0.01"
+              class="p-3 border-2 border-primary bg-surface font-headline font-bold text-lg focus:ring-0 focus:border-primary"
+            />
+          </div>
+
+          <div class="flex gap-4">
+            <button 
+              (click)="closeRefundModal()"
+              [disabled]="refundProcessing()"
+              class="flex-1 py-3 border-2 border-primary font-headline uppercase font-bold text-sm hover:bg-surface-container"
+            >
+              Cancel
+            </button>
+            <button 
+              (click)="submitRefund()"
+              [disabled]="refundProcessing()"
+              class="flex-1 py-3 bg-error text-on-error font-headline uppercase font-black text-sm brutalist-button brutalist-shadow-sm brutalist-shadow-hover-sm"
+            >
+              {{ refundProcessing() ? 'Processing...' : 'Confirm Refund' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    }
   }
 </main>
+

@@ -92,7 +92,7 @@ const login = asyncHandler(async (req, res) => {
       res.cookie("refreshToken", refreshToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
+        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
         maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
       });
 
@@ -179,7 +179,7 @@ const refresh = asyncHandler(async (req, res) => {
     res.cookie("refreshToken", newRefreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
       maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
     });
 
@@ -336,6 +336,39 @@ const resendVerification = asyncHandler(async (req, res) => {
   );
 });
 
+const resetPassword = asyncHandler(async (req, res) => {
+  const token = req.params.token || req.body.token;
+  const { password, newPassword } = req.body;
+  const targetPassword = password || newPassword;
+
+  if (!token) {
+    throw new ApiError(400, "Reset token is required");
+  }
+
+  if (!targetPassword || targetPassword.length < 6) {
+    throw new ApiError(400, "Password must be at least 6 characters long");
+  }
+
+  let decoded;
+  try {
+    decoded = jwtServices.verifyResetToken(token);
+  } catch (err) {
+    throw new ApiError(400, "Invalid or expired password reset token");
+  }
+
+  const hashedPassword = await bcrypt.hash(targetPassword, 12);
+  const updatedUser = await UserRepo.updatePassword(decoded.userId, hashedPassword);
+
+  if (!updatedUser) {
+    throw new ApiError(404, "User not found");
+  }
+
+  // Security: Invalidate all existing refresh tokens for this user
+  await jwtServices.revokeAllRefreshTokens(decoded.userId);
+
+  sendSuccess(res, null, "Password has been successfully reset. You can now log in.", 200);
+});
+
 module.exports = {
   register,
   login,
@@ -345,5 +378,6 @@ module.exports = {
   updateUserProfile,
   verifyEmail,
   forgetPassword,
+  resetPassword,
   resendVerification,
 };

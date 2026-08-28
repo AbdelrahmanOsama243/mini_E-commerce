@@ -1,10 +1,3 @@
-/**
- * Email Worker — BullMQ
- * 
- * هذا الملف هو المسؤول عن تنفيذ مهام إرسال الإيميلات في الخلفية.
- * يستمع للطابور (Queue) وينفذ كل مهمة بمجرد وصولها.
- */
-
 const { Worker } = require("bullmq");
 const emailService = require("../Utils/emailService");
 const logger = require("../Config/logger");
@@ -16,17 +9,22 @@ const startEmailWorker = () => {
   emailWorker = new Worker(
     "emailQueue",
     async (job) => {
-      const { to, token } = job.data;
+      const { to, token, payload } = job.data;
       const type = job.name;
+      const data = payload !== undefined ? payload : token;
 
       logger.info({ jobId: job.id, type, to, attempt: job.attemptsMade + 1 }, "Processing email job");
 
       switch (type) {
         case "verification":
-          await emailService.sendVerificationEmail(to, token);
+          await emailService.sendVerificationEmail(to, typeof data === "string" ? data : data?.token);
           break;
         case "forgetPassword":
-          await emailService.sendForgetPasswordEmail(to, token);
+          await emailService.sendForgetPasswordEmail(to, typeof data === "string" ? data : data?.token);
+          break;
+        case "paymentInvoice":
+        case "invoice":
+          await emailService.sendPaymentInvoiceEmail(to, data);
           break;
         default:
           logger.warn({ jobId: job.id, type }, "Unknown email job type");

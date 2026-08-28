@@ -7,29 +7,27 @@ require('dotenv').config();
  * نستدعي هذه الدالة في كل مرة نحتاج فيها لـ Queue أو Worker منفصل
  */
 const createBullMQConnection = () => {
-  let connectionConfig;
+  let connection;
 
   if (process.env.REDIS_URL) {
-    connectionConfig = process.env.REDIS_URL;
+    connection = new Redis(process.env.REDIS_URL, {
+      maxRetriesPerRequest: null,
+    });
   } else {
-    connectionConfig = {
+    connection = new Redis({
       host: process.env.REDIS_HOST || "127.0.0.1",
       port: parseInt(process.env.REDIS_PORT) || 6379,
       password: process.env.REDIS_SECRET || undefined,
-    };
+      maxRetriesPerRequest: null,
+    });
   }
 
-  // maxRetriesPerRequest: null is extremely important for BullMQ
-  const connection = new Redis(connectionConfig, {
-    maxRetriesPerRequest: null,
-  });
-
-  // مراقبة الأخطاء (مثل فقدان الاتصال بلحظة)
+  // Monitor errors
   connection.on('error', (err) => {
     logger.warn({ err: err.message }, 'BullMQ Redis Connection Warning');
   });
 
-  // مراقبة إعادة الاتصال
+  // Monitor reconnecting
   connection.on('reconnecting', () => {
     logger.info('BullMQ Redis is attempting to reconnect...');
   });
@@ -38,9 +36,8 @@ const createBullMQConnection = () => {
 };
 
 // ==========================================
-// إعداد الـ Graceful Shutdown لـ PM2
+// Graceful Shutdown Tracking for BullMQ
 // ==========================================
-// نحتفظ بقائمة بالاتصالات المفتوحة لنغلقها معاً عند الإيقاف
 const activeConnections = new Set();
 
 const createTrackedBullMQConnection = () => {
@@ -50,25 +47,16 @@ const createTrackedBullMQConnection = () => {
 };
 
 const closeAllBullMQConnections = async () => {
-  logger.info('PM2 Shutdown Signal: Closing all BullMQ Redis connections...');
+  logger.info('Closing all BullMQ Redis connections...');
   const promises = [];
   for (const conn of activeConnections) {
     if (conn.status === 'ready') {
-      promises.push(conn.quit());
+      promises.push(conn.quit().catch((e) => logger.warn({ err: e.message }, 'Error closing BullMQ connection')));
     }
   }
   await Promise.all(promises);
-  logger.info('All BullMQ connections closed gracefully.');
+  activeConnections.clear();
+  logger.info('All BullMQ connections closed.');
 };
 
-// Hook into the process exit events to ensure graceful shutdown of BullMQ connections
-process.on('SIGINT', async () => {
-  await closeAllBullMQConnections();
-});
-
-process.on('SIGTERM', async () => {
-  await closeAllBullMQConnections();
-});
-
-// نصدر الدالة التي تتبع الاتصالات
 module.exports = { createTrackedBullMQConnection, closeAllBullMQConnections };

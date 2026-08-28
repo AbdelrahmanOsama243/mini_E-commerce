@@ -4,7 +4,10 @@
 import { Product } from './iproduct';
 import { UserProfile } from './iauth';
 
-export type OrderStatus = 'pending' | 'processing' | 'shipped' | 'delivered';
+export type OrderStatus =
+  | 'pending' | 'paid' | 'processing' | 'shipped'
+  | 'delivered' | 'payment_failed' | 'failed' | 'cancelled'
+  | 'refunded' | 'partially_refunded';
 
 export interface OrderItem {
   _id: string;
@@ -20,6 +23,11 @@ export interface Order {
   totalPrice: number;
   status: OrderStatus;
   shippingAddress: string;
+  paymentMethod: 'card' | 'wallet' | 'kiosk' | 'valu' | 'cod';
+  paymobOrderId?: string;
+  transactionId?: string;
+  fawryReferenceNumber?: string;
+  refundedAmount?: number;
   createdAt: string;
   updatedAt: string;
 }

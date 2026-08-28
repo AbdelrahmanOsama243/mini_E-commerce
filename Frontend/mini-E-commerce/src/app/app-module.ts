@@ -1,13 +1,18 @@
-import { NgModule, provideBrowserGlobalErrorListeners } from '@angular/core';
+import { NgModule, APP_INITIALIZER, provideBrowserGlobalErrorListeners } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 import { httpTokenInterceptor } from './core/interceptors/http-token.interceptor';
 import { errorInterceptor } from './core/interceptors/error.interceptor';
+import { AuthService } from './core/Services/auth-service';
 
 import { AppRoutingModule } from './app-routing-module';
 import { App } from './app';
+
+export function initializeApp(authService: AuthService) {
+  return () => authService.initAuth();
+}
 
 // Shared Components
 import { ToastComponent } from './shared/toast/toast';
@@ -28,6 +33,13 @@ import { CartComponent } from './Feather/cart/cart';
 import { AdminProductsComponent } from './Feather/admin-products/product-table/product-table';
 import { RegisterComponent } from './Feather/auth/register/register';
 import { LoginComponent } from './Feather/auth/login/login';
+import { VerifyEmailComponent } from './Feather/auth/verify-email/verify-email';
+import { ForgotPasswordComponent } from './Feather/auth/forgot-password/forgot-password';
+import { ResetPasswordComponent } from './Feather/auth/reset-password/reset-password';
+import { PaymentIframeComponent } from './Feather/payment/payment-iframe/payment-iframe';
+import { FawryReferenceComponent } from './Feather/payment/fawry-reference/fawry-reference';
+import { PaymentSuccessComponent } from './Feather/payment/payment-success/payment-success';
+import { PaymentFailedComponent } from './Feather/payment/payment-failed/payment-failed';
 
 @NgModule({
   declarations: [
@@ -48,12 +60,26 @@ import { LoginComponent } from './Feather/auth/login/login';
     AdminProductsComponent,
     RegisterComponent,
     LoginComponent,
+    VerifyEmailComponent,
+    ForgotPasswordComponent,
+    ResetPasswordComponent,
+    PaymentIframeComponent,
+    FawryReferenceComponent,
+    PaymentSuccessComponent,
+    PaymentFailedComponent,
   ],
   imports: [BrowserModule, AppRoutingModule, FormsModule, ReactiveFormsModule],
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideHttpClient(withInterceptors([httpTokenInterceptor, errorInterceptor])),
+    {
+      provide: APP_INITIALIZER,
+      useFactory: initializeApp,
+      deps: [AuthService],
+      multi: true,
+    },
   ],
   bootstrap: [App],
 })
 export class AppModule {}
+

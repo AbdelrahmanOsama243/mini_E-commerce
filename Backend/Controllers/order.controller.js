@@ -8,7 +8,7 @@ const { validateObjectId } = require("../Middlewares/validateObjectId");
 const { addOrderJob } = require("../Jobs/order.queue");
 
 const createOrder = asyncHandler(async (req, res, next) => {
-  const { shippingAddress } = req.body;
+  const { shippingAddress, paymentMethod = 'cod' } = req.body;
   const userId = req.user?.id;
   if (!userId) {
     return next(new ApiError(401, "Unauthorized"));
@@ -43,6 +43,7 @@ const createOrder = asyncHandler(async (req, res, next) => {
     userId,
     items: orderItems,
     shippingAddress,
+    paymentMethod,
     totalPrice,
     status: "pending",
   });
@@ -86,7 +87,10 @@ const getOrderById = [
       return next(new ApiError(404, "Order not found"));
     }
 
-    if (order.userId._id.toString() !== req.user?.id && req.user?.role !== "admin") {
+    const orderUserId = (order.userId?._id || order.userId)?.toString();
+    const currentUserId = (req.user?._id || req.user?.id || req.user)?.toString();
+
+    if (orderUserId !== currentUserId && req.user?.role !== "admin") {
       return next(new ApiError(403, "Forbidden"));
     }
 
