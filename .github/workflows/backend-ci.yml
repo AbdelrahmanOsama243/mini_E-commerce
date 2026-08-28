@@ -1,4 +1,4 @@
-name: Backend CI/CD (Glitch)
+name: Backend CI/CD (Cloudflare Workers)
 
 on:
   push:
@@ -47,20 +47,27 @@ jobs:
         run: npm audit --audit-level=critical || true
 
   deploy:
-    name: Deploy to Glitch
+    name: Deploy to Cloudflare Workers
     needs: validate-and-test
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop'
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
-      - name: Deploy Backend to Glitch Remote
-        if: env.GLITCH_GIT_URL != ''
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Deploy to Cloudflare Workers via Wrangler
+        if: env.CLOUDFLARE_API_TOKEN != ''
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: 'Backend'
+          command: deploy
         env:
-          GLITCH_GIT_URL: ${{ secrets.GLITCH_GIT_URL }}
-        run: |
-          git subtree push --prefix Backend $GLITCH_GIT_URL main || echo "Glitch deploy triggered"
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}

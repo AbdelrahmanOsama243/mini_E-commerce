@@ -1,4 +1,4 @@
 export const environment = {
   production: false,
-  apiUrl: 'https://retype-pesky-prowling.ngrok-free.dev/api'
+  apiUrl: 'http://localhost:3000/api'
 };

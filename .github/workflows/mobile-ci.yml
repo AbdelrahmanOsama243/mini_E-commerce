@@ -40,7 +40,7 @@ jobs:
   eas-build:
     name: EAS Build Production APK
     needs: typecheck-and-lint
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop'
     runs-on: ubuntu-latest
 
     defaults:
