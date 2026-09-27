@@ -14,6 +14,7 @@ import { Borders, Spacing, Palette } from '@/constants/theme';
 import { moderateScale } from '@/Utils/responsive';
 import { useAuthStore } from '@/store/authStore';
 import { AuthService } from '@/Services/Auth.Service';
+import { showSuccess, showError, showInfo } from '@/Utils/toast';
 
 export default function AccountScreen() {
   const { colors, isDark, toggleTheme } = useTheme();
@@ -35,9 +36,9 @@ export default function AccountScreen() {
       await AuthService.updateUserProfile({
         themePreference: isDark ? 'dark' : 'light',
       });
-      Alert.alert('Success', 'Settings saved successfully');
+      showSuccess('Settings Saved', 'Your preferences have been updated.');
     } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to save settings');
+      showError('Settings Error', error);
     } finally {
       setSaving(false);
     }
@@ -51,6 +52,7 @@ export default function AccountScreen() {
         style: 'destructive',
         onPress: async () => {
           await logout();
+          showSuccess('Signed Out', 'You have been signed out successfully.');
           router.replace('/(auth)/login');
         },
       },

@@ -11,6 +11,9 @@ export const httpTokenInterceptor: HttpInterceptorFn = (req, next) => {
     headers = headers.set('Authorization', `Bearer ${accessToken}`);
   }
 
+  // Bypass ngrok's browser interstitial page that returns HTML instead of JSON
+  headers = headers.set('ngrok-skip-browser-warning', 'true');
+
   // When using session cookies, we need to ensure withCredentials is true
   // so that the browser sends cookies with cross-origin requests.
   req = req.clone({

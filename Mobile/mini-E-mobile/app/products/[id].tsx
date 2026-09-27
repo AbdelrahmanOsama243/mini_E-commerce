@@ -13,6 +13,7 @@ import { KoshkText, KoshkButton, KoshkCard, KoshkBadge } from '@/components/Mobi
 import { Borders, Spacing, Palette } from '@/constants/theme';
 import { ProductService, Product } from '@/Services/Product.Service';
 import { useCartStore } from '@/store/cartStore';
+import { showSuccess, showError, showInfo } from '@/Utils/toast';
 
 export default function ProductDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -36,12 +37,16 @@ export default function ProductDetailScreen() {
 
   const handleAddToCart = async () => {
     if (!product) return;
+    if (product.stock <= 0) {
+      showInfo('Out of Stock', 'This product is currently out of stock.');
+      return;
+    }
     setAddingToCart(true);
     try {
       await addItem({ productId: product._id, quantity, product });
-      Alert.alert('Added to Cart', `${product.name} ×${quantity} added to your cart.`);
+      showSuccess('Added to Cart', `${product.name} ×${quantity} added to your cart.`);
     } catch (err: any) {
-      Alert.alert('Error', err.message || 'Failed to add to cart');
+      showError('Failed to Add', err);
     } finally {
       setAddingToCart(false);
     }

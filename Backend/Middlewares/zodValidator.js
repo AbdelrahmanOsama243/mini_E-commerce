@@ -105,9 +105,9 @@ const orderSchemas = {
   },
   updateOrderStatus: {
     body: z.object({
-      status: z.enum(["pending", "processing", "shipped", "delivered", "payment_failed", "refunded"], { 
-        required_error: "Invalid status", 
-        invalid_type_error: "Invalid status" 
+      status: z.enum(["pending", "paid", "processing", "shipped", "delivered", "payment_failed", "failed", "cancelled", "refunded", "partially_refunded"], {
+        required_error: "Invalid status",
+        invalid_type_error: "Invalid status"
       })
     })
   }

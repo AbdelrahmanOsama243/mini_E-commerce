@@ -1,19 +1,21 @@
-name: Frontend CI/CD (Netlify)
+name: Frontend CI/CD (Vercel)
 
 on:
   push:
     branches: [ main, master, develop ]
     paths:
       - 'Frontend/**'
+      - 'vercel.json'
       - '.github/workflows/frontend-ci.yml'
   pull_request:
     branches: [ main, master ]
     paths:
       - 'Frontend/**'
+      - 'vercel.json'
 
 jobs:
-  build-and-test:
-    name: Frontend Build & Test
+  build-and-validate:
+    name: Frontend Build & Validate
     runs-on: ubuntu-latest
 
     defaults:
@@ -41,28 +43,38 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: frontend-dist
-          path: Frontend/mini-E-commerce/dist/mini-e-commerce/browser
+          path: Frontend/mini-E-commerce/dist/mini-E-commerce/browser
 
   deploy:
-    name: Deploy to Netlify
-    needs: build-and-test
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop'
+    name: Deploy to Vercel
+    needs: build-and-validate
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Download Build Artifact
-        uses: actions/download-artifact@v4
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
         with:
-          name: frontend-dist
-          path: ./dist-browser
+          node-version: 22
 
-      - name: Deploy to Netlify
-        if: env.NETLIFY_AUTH_TOKEN != '' && env.NETLIFY_SITE_ID != ''
-        env:
-          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
-        run: |
-          npx netlify-cli deploy --prod --dir=./dist-browser --site=$NETLIFY_SITE_ID --auth=$NETLIFY_AUTH_TOKEN
+      - name: Install Vercel CLI
+        run: npm install -g vercel
+
+      - name: Pull Vercel Project Settings
+        if: env.VERCEL_TOKEN != ''
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Build with Vercel
+        if: env.VERCEL_TOKEN != ''
+        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Deploy to Vercel Production
+        if: env.VERCEL_TOKEN != ''
+        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}

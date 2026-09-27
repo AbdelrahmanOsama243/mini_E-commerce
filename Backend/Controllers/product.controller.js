@@ -29,7 +29,8 @@ const createProduct = asyncHandler(async (req, res, next) => {
     req.body.image = `/uploads/products/${req.file.filename}`;
   }
   const { name, description, price, category, stock, image } = req.body
-  const product = await ProductsRepository.create({name,description,price,category,stock,image})
+  const createdBy = req.user?._id;
+  const product = await ProductsRepository.create({ name, description, price, category, stock, image, createdBy })
   return sendSuccess(res, product, "Product created successfully.", 201)
 })
 

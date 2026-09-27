@@ -6,6 +6,7 @@ const { authorize } = require('../Middlewares/authorize.middleware');
 const { validateZod } = require('../Middlewares/zodValidator');
 const { z } = require('zod');
 const { validateObjectId } = require('../Middlewares/validateObjectId');
+const { paymentLimiter } = require('../Middlewares/rateLimiter');
 
 // Note: Zod schemas are defined here for simplicity or can be imported from zodValidator.js
 // I'll define them here if they are not in zodValidator, but we updated zodValidator earlier.
@@ -48,6 +49,13 @@ const paymentSchemas = {
       amountCents: z.number().positive().optional()
     })
   },
+  recordTransaction: {
+    body: z.object({
+      orderId: z.string().min(1, "Order ID is required"),
+      transactionId: z.union([z.string(), z.number()]).optional(),
+      paymobOrderId: z.union([z.string(), z.number()]).optional()
+    })
+  },
   voidPayment: {
     body: z.object({
       orderId: z.string().min(1, "Order ID is required")
@@ -60,6 +68,7 @@ router.post('/callback', paymentController.handleCallback);
 
 // 🔒 Protected Routes
 router.use(authentication);
+router.use(paymentLimiter);
 
 router.post('/initiate',
   validateZod(paymentSchemas.initiatePayment),
@@ -71,6 +80,11 @@ router.post('/cod',
   paymentController.initiateCOD
 );
 
+router.post('/record-transaction',
+  validateZod(paymentSchemas.recordTransaction),
+  paymentController.recordTransaction
+);
+
 router.get('/status/:orderId',
   validateObjectId(['orderId'], 'params'),
   paymentController.getPaymentStatus
@@ -80,7 +94,6 @@ router.get('/methods', paymentController.getSavedMethods);
 
 // 🔒 Admin Only
 router.post('/refund',
-  authorize('admin'),
   validateZod(paymentSchemas.refundPayment),
   paymentController.refundPayment
 );

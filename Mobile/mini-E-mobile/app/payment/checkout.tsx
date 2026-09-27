@@ -6,9 +6,11 @@ import { KoshkText, KoshkButton, KoshkInput } from "../../components/Mobile";
 import { Borders, Spacing } from "../../constants/theme";
 import { useCartStore } from "../../store/cartStore";
 import { usePaymentStore } from "../../store/paymentStore";
+import { useOrderStore } from "../../store/orderStore";
 import { PaymentService, PaymentMethodType } from "../../Services/Payment.Service";
 import { PaymobSDKService } from "../../Services/PaymobSDK.Service";
 import { Ionicons } from "@expo/vector-icons";
+import { showSuccess, showError, showInfo } from "@/Utils/toast";
 
 export default function CheckoutScreen() {
   const { colors } = useTheme();
@@ -35,31 +37,31 @@ export default function CheckoutScreen() {
   const validateForm = () => {
     // 1. Name validations (Always Required)
     if (!firstName.trim() || firstName.trim().length < 2) {
-      Alert.alert("Validation Error", "First name is required (minimum 2 characters).");
+      showInfo("Validation Error", "First name is required (minimum 2 characters).");
       return false;
     }
 
     if (!lastName.trim() || lastName.trim().length < 2) {
-      Alert.alert("Validation Error", "Last name is required (minimum 2 characters).");
+      showInfo("Validation Error", "Last name is required (minimum 2 characters).");
       return false;
     }
 
     // 2. Phone validation (Always Required)
     if (!phone.trim() || !phoneRegex.test(phone.trim())) {
-      Alert.alert("Validation Error", "Please enter a valid 11-digit Egyptian mobile number (e.g. 01012345678).");
+      showInfo("Validation Error", "Please enter a valid 11-digit Egyptian mobile number (e.g. 01012345678).");
       return false;
     }
 
     // 3. Shipping Address (Always Required)
     if (!shippingAddress.trim() || shippingAddress.trim().length < 5) {
-      Alert.alert("Validation Error", "Please enter a valid shipping address (minimum 5 characters).");
+      showInfo("Validation Error", "Please enter a valid shipping address (minimum 5 characters).");
       return false;
     }
 
     // 4. Method Specific Validations
     if (selectedMethod === "cod") {
       if (!hasSavedMethods) {
-        Alert.alert("Error", "Cash on Delivery requires at least one saved payment method (Card/Wallet).");
+        showInfo("Payment Error", "Cash on Delivery requires at least one saved payment method (Card/Wallet).");
         return false;
       }
     }
@@ -68,9 +70,8 @@ export default function CheckoutScreen() {
   };
 
   const handleCheckout = async () => {
-    setSubmitted(true);
-
     if (!validateForm()) {
+      setSubmitted(true);
       return;
     }
 
@@ -87,9 +88,12 @@ export default function CheckoutScreen() {
           },
         });
         await clearCart();
+        // Update orders list immediately in the background
+        useOrderStore.getState().loadOrders();
+        showSuccess("Order Placed", "Your Cash on Delivery order has been placed!");
         router.replace("../payment/success");
       } catch (err: any) {
-        Alert.alert("Error", err.message || "Failed to place order via COD");
+        showError("Order Failed", err);
       } finally {
         setLoading(false);
       }
@@ -101,7 +105,7 @@ export default function CheckoutScreen() {
           billingData: {
             firstName: firstName.trim(),
             lastName: lastName.trim(),
-            email: "", // Automatically populated by Backend from authenticated user
+            email: undefined as any, // Backend uses authenticated user's email
             phone: phone.trim(),
             city: "Cairo",
             street: shippingAddress.trim(),
@@ -109,7 +113,7 @@ export default function CheckoutScreen() {
           walletPhone: selectedMethod === "wallet" ? phone.trim() : undefined,
         });
 
-        await clearCart();
+        // Note: Cart is cleared only AFTER payment confirmation in the success/fail handlers below
 
         if (selectedMethod === "card" || selectedMethod === "valu") {
           const secret = res.clientSecret || res.paymentToken;
@@ -125,14 +129,37 @@ export default function CheckoutScreen() {
               clientSecret: secret,
               publicKey: res.publicKey,
               savedBankCards: formattedCards,
-              onSuccess: () => {
+              onSuccess: async () => {
+                try {
+                  await PaymentService.recordTransaction({
+                    orderId: res.orderId,
+                    paymobOrderId: (res as any).paymobOrderId,
+                  });
+                } catch (e) {
+                  console.warn("Could not record transaction:", e);
+                }
+                await clearCart();
+                useOrderStore.getState().loadOrders();
+                showSuccess("Payment Successful", "Your transaction was completed.");
                 router.replace("../payment/success");
               },
               onFail: (msg) => {
-                Alert.alert("Payment Failed", msg || "Your payment was not completed.");
+                // Don't clear cart on failure - let user retry
+                showError("Payment Failed", msg || "Your payment was not completed.");
                 router.replace("../payment/failed");
               },
-              onPending: () => {
+              onPending: async () => {
+                try {
+                  await PaymentService.recordTransaction({
+                    orderId: res.orderId,
+                    paymobOrderId: (res as any).paymobOrderId,
+                  });
+                } catch (e) {
+                  console.warn("Could not record transaction:", e);
+                }
+                await clearCart();
+                useOrderStore.getState().loadOrders();
+                showInfo("Payment Pending", "Your payment is being processed.");
                 router.replace("../payment/success");
               },
             });
@@ -141,12 +168,13 @@ export default function CheckoutScreen() {
             router.push({ pathname: "../payment/webview", params: { url: res.iframeUrl, orderId: res.orderId } });
           }
         } else if (selectedMethod === "kiosk") {
+          useOrderStore.getState().loadOrders();
           router.push({ pathname: "../payment/fawry", params: { ref: res.fawryReferenceNumber, orderId: res.orderId } });
         } else if (selectedMethod === "wallet") {
           router.push({ pathname: "../payment/webview", params: { url: res.redirectUrl, orderId: res.orderId } });
         }
       } catch (err: any) {
-        Alert.alert("Error", err.message || "Failed to initiate payment");
+        showError("Payment Error", err);
       } finally {
         setLoading(false);
       }
@@ -239,11 +267,14 @@ export default function CheckoutScreen() {
         <View style={{ height: Spacing.xl }} />
 
         <KoshkButton
-          title={loading ? "PROCESSING..." : selectedMethod === "cod" ? "PLACE ORDER (COD)" : "PAY & PLACE ORDER"}
-          variant="primary"
+          title={loading ? "PROCESSING PAYMENT..." : selectedMethod === "cod" ? "PLACE ORDER (COD)" : "PAY & PLACE ORDER"}
+          variant="success"
+          size="lg"
+          icon={<Ionicons name={selectedMethod === "cod" ? "bag-check-outline" : "lock-closed-outline"} size={18} color="#FFFFFF" />}
           onPress={handleCheckout}
           disabled={loading}
           fullWidth
+          style={styles.orderBtn}
         />
       </ScrollView>
     </View>
@@ -253,6 +284,15 @@ export default function CheckoutScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   scroll: { padding: Spacing.lg, paddingBottom: 100 },
+  orderBtn: {
+    height: 54,
+    borderRadius: Borders.radius.sm,
+    shadowColor: '#10B981',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
   title: { marginBottom: Spacing.xl },
   sectionTitle: { marginTop: Spacing.lg, marginBottom: Spacing.sm },
   methodsGrid: {

@@ -159,6 +159,22 @@ class PaymobService {
   }
 
   /**
+   * Inquire Transactions for a Paymob Order
+   */
+  async getTransactionsForOrder(authToken, paymobOrderId) {
+    try {
+      const response = await axios.post(`${paymobConfig.BASE_URL}/ecommerce/orders/transaction_inquiry`, {
+        auth_token: authToken,
+        order_id: paymobOrderId
+      });
+      return response.data;
+    } catch (error) {
+      logger.warn(`Paymob getTransactionsForOrder Error: ${error.response?.data?.message || error.message}`);
+      return null;
+    }
+  }
+
+  /**
    * Verify HMAC signature for Webhooks
    */
   verifyHMAC(queryString, hmacHeader) {

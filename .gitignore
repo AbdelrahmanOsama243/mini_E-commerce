@@ -159,3 +159,5 @@ ios/
 dist/
 dist-browser/
 
+.vercel
+.env*

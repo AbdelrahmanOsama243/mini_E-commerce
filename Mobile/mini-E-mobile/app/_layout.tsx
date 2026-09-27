@@ -5,6 +5,9 @@ import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
+import Toast from 'react-native-toast-message';
+import { toastConfig } from '@/Utils/toast';
+
 
 import {
   SpaceGrotesk_300Light,
@@ -99,6 +102,7 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <KoshkThemeProvider>
         <AppNavigator />
+        <Toast config={toastConfig} />
       </KoshkThemeProvider>
     </SafeAreaProvider>
   );

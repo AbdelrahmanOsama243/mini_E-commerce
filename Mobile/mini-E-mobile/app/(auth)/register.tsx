@@ -13,6 +13,7 @@ import { KoshkText, KoshkButton, KoshkInput, KoshkCard } from '@/components/Mobi
 import { Borders, Spacing, Palette } from '@/constants/theme';
 import { AuthService } from '@/Services/Auth.Service';
 import { moderateScale } from '@/Utils/responsive';
+import { showSuccess, showError, showInfo } from '@/Utils/toast';
 
 export default function RegisterScreen() {
   const { colors } = useTheme();
@@ -30,10 +31,15 @@ export default function RegisterScreen() {
     if (!email.trim()) newErrors.email = 'Email is required';
     else if (!/\S+@\S+\.\S+/.test(email)) newErrors.email = 'Invalid email format';
     if (!password.trim()) newErrors.password = 'Password is required';
-    else if (password.length < 6) newErrors.password = 'Minimum 6 characters';
+    else if (password.length < 8) newErrors.password = 'Minimum 8 characters';
+    else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])/.test(password)) newErrors.password = 'Must contain uppercase, lowercase, number & special character';
     if (password !== confirmPassword) newErrors.confirmPassword = 'Passwords do not match';
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    const isValid = Object.keys(newErrors).length === 0;
+    if (!isValid) {
+      showInfo('Validation Error', 'Please complete all required fields correctly.');
+    }
+    return isValid;
   };
 
   const handleRegister = async () => {
@@ -41,11 +47,12 @@ export default function RegisterScreen() {
     setLoading(true);
     try {
       await AuthService.register({ name, email, password });
-      Alert.alert('Account Created', 'Please verify your email, then sign in.', [
-        { text: 'OK', onPress: () => router.replace('/(auth)/login') },
-      ]);
+      showSuccess('Account Created', 'Please verify your email, then sign in.');
+      setTimeout(() => {
+        router.replace('/(auth)/login');
+      }, 1500);
     } catch (err: any) {
-      Alert.alert('Registration Failed', err.message || 'Could not create account');
+      showError('Registration Failed', err);
     } finally {
       setLoading(false);
     }

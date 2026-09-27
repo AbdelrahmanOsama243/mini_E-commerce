@@ -31,6 +31,8 @@ import { OrderDetailComponent } from './Feather/orders/order-detail/order-detail
 import { CheckoutComponent } from './Feather/checkout-page/checkout-page';
 import { CartComponent } from './Feather/cart/cart';
 import { AdminProductsComponent } from './Feather/admin-products/product-table/product-table';
+import { UserDashboardComponent } from './Feather/dashboard/user-dashboard/user-dashboard';
+import { AdminDashboardComponent } from './Feather/dashboard/admin-dashboard/admin-dashboard';
 import { RegisterComponent } from './Feather/auth/register/register';
 import { LoginComponent } from './Feather/auth/login/login';
 import { VerifyEmailComponent } from './Feather/auth/verify-email/verify-email';
@@ -40,6 +42,8 @@ import { PaymentIframeComponent } from './Feather/payment/payment-iframe/payment
 import { FawryReferenceComponent } from './Feather/payment/fawry-reference/fawry-reference';
 import { PaymentSuccessComponent } from './Feather/payment/payment-success/payment-success';
 import { PaymentFailedComponent } from './Feather/payment/payment-failed/payment-failed';
+import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
+import { NgxChartsModule } from '@swimlane/ngx-charts';
 
 @NgModule({
   declarations: [
@@ -58,6 +62,8 @@ import { PaymentFailedComponent } from './Feather/payment/payment-failed/payment
     CheckoutComponent,
     CartComponent,
     AdminProductsComponent,
+    UserDashboardComponent,
+    AdminDashboardComponent,
     RegisterComponent,
     LoginComponent,
     VerifyEmailComponent,
@@ -68,9 +74,10 @@ import { PaymentFailedComponent } from './Feather/payment/payment-failed/payment
     PaymentSuccessComponent,
     PaymentFailedComponent,
   ],
-  imports: [BrowserModule, AppRoutingModule, FormsModule, ReactiveFormsModule],
+  imports: [BrowserModule, AppRoutingModule, FormsModule, ReactiveFormsModule, NgxChartsModule],
   providers: [
     provideBrowserGlobalErrorListeners(),
+    provideAnimationsAsync(),
     provideHttpClient(withInterceptors([httpTokenInterceptor, errorInterceptor])),
     {
       provide: APP_INITIALIZER,

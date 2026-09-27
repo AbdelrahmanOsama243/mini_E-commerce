@@ -1,0 +1,737 @@
+<div class="admin-dashboard-wrapper">
+  <!-- Top Control Bar -->
+  <header class="admin-header">
+    <div class="header-titles">
+      <span class="overline">SELLER & ADMIN INTELLIGENCE</span>
+      <h1 class="title">Admin Analytics Dashboard</h1>
+      <p class="subtitle">Real-time performance metrics, multi-admin inventory & sales intelligence.</p>
+    </div>
+    <div class="header-actions">
+      <!-- Direct Popup Dialog Triggers -->
+      <button (click)="openCreateModal()" class="btn-action-primary">
+        <span>➕ Add Product</span>
+      </button>
+      <button (click)="openInventoryModal()" class="btn-action-secondary">
+        <span>📦 Products Hub</span>
+      </button>
+      <button (click)="toggleLooker()" class="btn-toggle-looker" [class.active]="showLookerEmbed()">
+        <span *ngIf="!showLookerEmbed()">📊 Looker Studio</span>
+        <span *ngIf="showLookerEmbed()">✕ Close Looker</span>
+      </button>
+      <button (click)="loadAdminAnalytics()" class="btn-refresh" [disabled]="loading()">
+        <span>⟳ Refresh</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Looker Studio Global Embed Section (Collapsible) -->
+  <div *ngIf="showLookerEmbed()" class="looker-embed-section">
+    <div class="looker-bar">
+      <div class="looker-info">
+        <span class="looker-badge">GOOGLE LOOKER STUDIO</span>
+        <span>Global Platform Macro-Analytics</span>
+      </div>
+      <a [href]="lookerUrl" target="_blank" class="looker-external-link">Open in Full Tab ↗</a>
+    </div>
+
+    <div class="looker-iframe-container" *ngIf="lookerUrl; else noLookerConfig">
+      <iframe
+        [src]="lookerUrl"
+        frameborder="0"
+        allowfullscreen
+        sandbox="allow-storage-access-by-user-activation allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox">
+      </iframe>
+    </div>
+    <ng-template #noLookerConfig>
+      <div class="looker-placeholder">
+        <p>Google Looker Studio embed URL is not configured yet in environment settings.</p>
+        <small>Set <code>lookerStudioReportUrl</code> in <code>environment.ts</code> with your report link.</small>
+      </div>
+    </ng-template>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading()" class="loading-state">
+    <app-loading-spinner></app-loading-spinner>
+    <p class="loading-text">Crunching store analytics...</p>
+  </div>
+
+  <div *ngIf="!loading()" class="dashboard-body">
+    <!-- Top 4 KPIs Grid -->
+    <div class="kpi-grid">
+      <!-- Total Revenue -->
+      <div class="kpi-card highlight-kpi">
+        <div class="kpi-top">
+          <span class="kpi-label">TOTAL REVENUE</span>
+          <span class="kpi-badge revenue-badge">MY STORE</span>
+        </div>
+        <div class="kpi-number">${{ (overview()?.totalRevenue || 0) | number:'1.2-2' }}</div>
+        <div class="kpi-footer">From {{ overview()?.totalOrdersCount || 0 }} customer orders</div>
+      </div>
+
+      <!-- Items Sold -->
+      <div class="kpi-card">
+        <div class="kpi-top">
+          <span class="kpi-label">TOTAL UNITS SOLD</span>
+          <span class="kpi-icon">📈</span>
+        </div>
+        <div class="kpi-number">{{ overview()?.totalItemsSold || 0 }}</div>
+        <div class="kpi-footer">Across all product listings</div>
+      </div>
+
+      <!-- Active Products & Inventory Value -->
+      <div class="kpi-card">
+        <div class="kpi-top">
+          <span class="kpi-label">PRODUCTS TRACKED</span>
+          <span class="kpi-icon">🏷</span>
+        </div>
+        <div class="kpi-number">{{ overview()?.totalProducts || 0 }}</div>
+        <div class="kpi-footer">Value: ${{ (overview()?.totalInventoryValue || 0) | number:'1.2-2' }}</div>
+      </div>
+
+      <!-- Low Stock Alerts -->
+      <div class="kpi-card danger-kpi" [class.has-alerts]="(overview()?.lowStockCount || 0) > 0">
+        <div class="kpi-top">
+          <span class="kpi-label">LOW STOCK ALERTS</span>
+          <span class="kpi-badge warning">{{ overview()?.lowStockCount || 0 }} CRITICAL</span>
+        </div>
+        <div class="kpi-number">{{ overview()?.lowStockCount || 0 }}</div>
+        <div class="kpi-footer">{{ overview()?.outOfStockCount || 0 }} out of stock completely</div>
+      </div>
+    </div>
+
+    <!-- Critical Inventory Alerts Table with Direct Popup Restock -->
+    <div class="full-panel danger-panel" *ngIf="lowStockProducts().length > 0">
+      <div class="panel-header">
+        <div>
+          <span class="overline text-danger">⚠️ RESTOCK ALERT</span>
+          <h3 class="panel-title">Critical Stock Depletion (≤ 10 units left)</h3>
+        </div>
+        <span class="badge danger">{{ lowStockProducts().length }} Items Need Restock</span>
+      </div>
+
+      <div class="table-container">
+        <table class="brutalist-table">
+          <thead>
+            <tr>
+              <th>Product Name</th>
+              <th>Category</th>
+              <th>Current Stock</th>
+              <th>Unit Price</th>
+              <th>Status</th>
+              <th class="text-right">Quick Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let prod of lowStockProducts()">
+              <td>
+                <strong class="item-name">{{ prod.name }}</strong>
+              </td>
+              <td><span class="tag">{{ prod.category }}</span></td>
+              <td>
+                <strong class="stock-badge" [class.out-badge]="prod.stock <= 0">
+                  {{ prod.stock }} units
+                </strong>
+              </td>
+              <td class="price-cell">${{ prod.price | number:'1.2-2' }}</td>
+              <td>
+                <span class="status-indicator" [class.out]="prod.isOutOfStock">
+                  {{ prod.isOutOfStock ? 'OUT OF STOCK' : 'LOW STOCK' }}
+                </span>
+              </td>
+              <td class="text-right">
+                <div class="row-actions">
+                  <button (click)="openRestockModal(prod)" class="btn-sm btn-restock">
+                    ⚡ Restock
+                  </button>
+                  <button (click)="openEditModal(prod)" class="btn-sm btn-edit">
+                    ✏️ Edit
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Charts Row 1: Top Products Bar Chart & Revenue Line Chart -->
+    <div class="charts-2col">
+      <!-- Top Selling Products -->
+      <div class="chart-panel">
+        <div class="panel-header">
+          <div>
+            <span class="overline">BEST SELLERS</span>
+            <h3 class="panel-title">Top Selling Products</h3>
+          </div>
+          <span class="badge success">High Velocity</span>
+        </div>
+        <div class="chart-box" *ngIf="topProductsChart().length > 0; else noTopProducts">
+          <ngx-charts-bar-horizontal
+            [results]="topProductsChart()"
+            [scheme]="primaryBarScheme"
+            [xAxis]="true"
+            [yAxis]="true"
+            [showXAxisLabel]="true"
+            [showYAxisLabel]="false"
+            [xAxisLabel]="'Units Sold'"
+            [animations]="true">
+          </ngx-charts-bar-horizontal>
+        </div>
+        <ng-template #noTopProducts>
+          <div class="empty-box"><p>No sales recorded for your products yet.</p></div>
+        </ng-template>
+      </div>
+
+      <!-- Revenue Timeline -->
+      <div class="chart-panel">
+        <div class="panel-header">
+          <div>
+            <span class="overline">EARNINGS TREND</span>
+            <h3 class="panel-title">Revenue Timeline</h3>
+          </div>
+          <span class="badge">Monthly</span>
+        </div>
+        <div class="chart-box" *ngIf="revenueChartData().length > 0 && revenueChartData()[0].series.length > 0; else noRevData">
+          <ngx-charts-line-chart
+            [results]="revenueChartData()"
+            [scheme]="revenueScheme"
+            [xAxis]="true"
+            [yAxis]="true"
+            [showXAxisLabel]="true"
+            [showYAxisLabel]="true"
+            [xAxisLabel]="'Month'"
+            [yAxisLabel]="'Revenue ($)'"
+            [autoScale]="true"
+            [animations]="true">
+          </ngx-charts-line-chart>
+        </div>
+        <ng-template #noRevData>
+          <div class="empty-box"><p>No monthly revenue history generated yet.</p></div>
+        </ng-template>
+      </div>
+    </div>
+
+    <!-- Charts Row 2: Payment Distribution & Least Selling Products Table -->
+    <div class="charts-2col">
+      <!-- Payment Methods -->
+      <div class="chart-panel">
+        <div class="panel-header">
+          <div>
+            <span class="overline">TRANSACTION CHANNELS</span>
+            <h3 class="panel-title">Payment Methods Distribution</h3>
+          </div>
+          <span class="badge">Gateways</span>
+        </div>
+        <div class="chart-box" *ngIf="paymentMethodChart().length > 0; else noPaymentData">
+          <ngx-charts-pie-chart
+            [results]="paymentMethodChart()"
+            [scheme]="paymentScheme"
+            [doughnut]="true"
+            [arcWidth]="0.4"
+            [legend]="true"
+            [legendTitle]="'Payment Gateway'"
+            [labels]="true"
+            [animations]="true">
+          </ngx-charts-pie-chart>
+        </div>
+        <ng-template #noPaymentData>
+          <div class="empty-box"><p>No transaction payment data available.</p></div>
+        </ng-template>
+      </div>
+
+      <!-- Least Selling Products with Direct Actions -->
+      <div class="chart-panel">
+        <div class="panel-header">
+          <div>
+            <span class="overline">ATTENTION NEEDED</span>
+            <h3 class="panel-title">Least Selling Products</h3>
+          </div>
+          <span class="badge warning">Low Velocity</span>
+        </div>
+        <div class="table-container" *ngIf="leastProducts().length > 0; else noLeast">
+          <table class="brutalist-table">
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>Category</th>
+                <th>Stock</th>
+                <th>Units Sold</th>
+                <th class="text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of leastProducts()">
+                <td class="product-cell">
+                  <strong class="item-name">{{ item.name }}</strong>
+                </td>
+                <td><span class="tag">{{ item.category }}</span></td>
+                <td><strong [class.text-danger]="item.stock <= 5">{{ item.stock }}</strong></td>
+                <td>{{ item.totalSold }}</td>
+                <td class="text-right">
+                  <div class="row-actions">
+                    <button (click)="openRestockModal(item)" class="btn-sm btn-restock" title="Quick Restock">
+                      ⚡ Restock
+                    </button>
+                    <button (click)="openEditModal(item)" class="btn-sm btn-edit" title="Edit Product">
+                      ✏️
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <ng-template #noLeast>
+          <div class="empty-box"><p>No inventory records found.</p></div>
+        </ng-template>
+      </div>
+    </div>
+
+    <!-- Top Customers Section -->
+    <div class="full-panel" *ngIf="topCustomers().length > 0">
+      <div class="panel-header">
+        <div>
+          <span class="overline">CUSTOMER VALUE</span>
+          <h3 class="panel-title">Top Buyers for Your Products</h3>
+        </div>
+        <span class="badge">VIP Customers</span>
+      </div>
+
+      <div class="table-container">
+        <table class="brutalist-table">
+          <thead>
+            <tr>
+              <th>Customer Name</th>
+              <th>Email</th>
+              <th>Orders Placed</th>
+              <th>Items Bought</th>
+              <th>Total Value</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let customer of topCustomers()">
+              <td><strong class="item-name">{{ customer.name }}</strong></td>
+              <td class="muted-cell">{{ customer.email }}</td>
+              <td>{{ customer.ordersCount }}</td>
+              <td>{{ customer.itemsPurchased }}</td>
+              <td><strong class="text-success">${{ customer.totalSpent | number:'1.2-2' }}</strong></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- POPUP DIALOG BOXES (Merged Product Page Services)                         -->
+  <!-- ========================================================================= -->
+
+  <!-- 1. POPUP: QUICK RESTOCK DIALOG -->
+  <div class="modal-overlay" *ngIf="isRestockModalOpen()" (click)="closeRestockModal()">
+    <div class="modal-dialog brutalist-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span class="modal-overline">WAREHOUSE INVENTORY ADJUSTER</span>
+          <h2 class="modal-title">⚡ Quick Restock</h2>
+        </div>
+        <button class="modal-close-btn" (click)="closeRestockModal()">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Target Product Selector / Header -->
+        <div class="restock-item-preview" *ngIf="restockingProduct(); else productPicker">
+          <div class="preview-info">
+            <span class="modal-badge-mini">TARGET PRODUCT</span>
+            <h4 class="preview-name">{{ restockingProduct()?.name }}</h4>
+            <span class="tag">{{ restockingProduct()?.category || 'decor' }}</span>
+          </div>
+          <div class="current-stock-badge">
+            <span class="label">CURRENT WAREHOUSE STOCK</span>
+            <span class="value">{{ restockingProduct()?.currentStock }} <small>units</small></span>
+          </div>
+        </div>
+
+        <ng-template #productPicker>
+          <div class="form-group mb-4">
+            <label class="form-label">Select Product to Restock *</label>
+            <select class="form-select" (change)="onSelectRestockProduct($any($event.target).value)">
+              <option value="">-- Choose a Product --</option>
+              <option *ngFor="let p of allProducts()" [value]="p._id">
+                {{ p.name }} (Current: {{ p.stock }} units)
+              </option>
+            </select>
+          </div>
+        </ng-template>
+
+        <!-- Restock Quantity Input -->
+        <div class="restock-control-group">
+          <label class="control-label">Restock Quantity to Add (+):</label>
+          <input
+            type="number"
+            min="1"
+            class="form-input stock-input"
+            [value]="restockAmount()"
+            (input)="setRestockAmount(+($any($event.target).value))"
+          />
+        </div>
+
+        <!-- Projected Stock Summary Calculation -->
+        <div class="restock-summary-box" *ngIf="restockingProduct()">
+          <div class="summary-line">
+            <span>Current: <strong>{{ restockingProduct()?.currentStock }}</strong></span>
+            <span>+</span>
+            <span>Adding: <strong class="text-success">+{{ restockAmount() }}</strong></span>
+            <span>=</span>
+            <span class="new-total">New Total: <strong>{{ (restockingProduct()?.currentStock || 0) + restockAmount() }} units</strong></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn-cancel" (click)="closeRestockModal()">Cancel</button>
+        <button
+          type="button"
+          class="btn-confirm-primary"
+          [disabled]="actionLoading() || !restockingProduct()"
+          (click)="saveRestock()">
+          <span *ngIf="!actionLoading()">Save</span>
+          <span *ngIf="actionLoading()">Saving...</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. POPUP: CREATE / ADD PRODUCT DIALOG -->
+  <div class="modal-overlay" *ngIf="isCreateModalOpen()" (click)="closeCreateModal()">
+    <div class="modal-dialog brutalist-modal modal-lg" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span class="modal-overline">NEW PRODUCT LISTING</span>
+          <h2 class="modal-title">➕ Add New Product</h2>
+        </div>
+        <button class="modal-close-btn" (click)="closeCreateModal()">✕</button>
+      </div>
+
+      <form [formGroup]="productForm" (ngSubmit)="onProductSubmit()">
+        <div class="modal-body form-grid">
+          <!-- Name -->
+          <div class="form-group full-width">
+            <label class="form-label">Product Name *</label>
+            <input
+              type="text"
+              formControlName="name"
+              placeholder="e.g. Bauhaus Geometric Lamp"
+              class="form-input"
+              [class.error]="submitted && f['name'].errors"
+            />
+            <small class="error-text" *ngIf="submitted && f['name'].errors">Product name is required (min 2 chars).</small>
+          </div>
+
+          <!-- Category -->
+          <div class="form-group">
+            <label class="form-label">Category *</label>
+            <select formControlName="category" class="form-select">
+              <option value="decor">Decor & Living</option>
+              <option value="furniture">Furniture</option>
+              <option value="lighting">Lighting</option>
+              <option value="kitchenware">Kitchenware</option>
+              <option value="apparel">Apparel & Merch</option>
+            </select>
+          </div>
+
+          <!-- Price -->
+          <div class="form-group">
+            <label class="form-label">Price ($) *</label>
+            <input
+              type="number"
+              step="0.01"
+              min="0"
+              formControlName="price"
+              class="form-input"
+              [class.error]="submitted && f['price'].errors"
+            />
+            <small class="error-text" *ngIf="submitted && f['price'].errors">Valid positive price required.</small>
+          </div>
+
+          <!-- Initial Stock -->
+          <div class="form-group">
+            <label class="form-label">Initial Stock *</label>
+            <input
+              type="number"
+              min="0"
+              formControlName="stock"
+              class="form-input"
+              [class.error]="submitted && f['stock'].errors"
+            />
+          </div>
+
+          <!-- Image URL -->
+          <div class="form-group">
+            <label class="form-label">Image URL</label>
+            <input
+              type="url"
+              formControlName="image"
+              placeholder="https://images.unsplash.com/..."
+              class="form-input"
+            />
+          </div>
+
+          <!-- Description -->
+          <div class="form-group full-width">
+            <label class="form-label">Description</label>
+            <textarea
+              formControlName="description"
+              rows="3"
+              placeholder="Detailed specifications, dimensions, materials..."
+              class="form-textarea">
+            </textarea>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn-cancel" (click)="closeCreateModal()">Cancel</button>
+          <button type="submit" class="btn-confirm-primary" [disabled]="actionLoading()">
+            <span *ngIf="!actionLoading()">Save</span>
+            <span *ngIf="actionLoading()">Saving...</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 3. POPUP: EDIT PRODUCT DIALOG -->
+  <div class="modal-overlay" *ngIf="isEditModalOpen()" (click)="closeEditModal()">
+    <div class="modal-dialog brutalist-modal modal-lg" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span class="modal-overline">MODIFY LISTING</span>
+          <h2 class="modal-title">✏️ Edit Product Details</h2>
+        </div>
+        <button class="modal-close-btn" (click)="closeEditModal()">✕</button>
+      </div>
+
+      <form [formGroup]="productForm" (ngSubmit)="onProductSubmit()">
+        <div class="modal-body form-grid">
+          <!-- Name -->
+          <div class="form-group full-width">
+            <label class="form-label">Product Name *</label>
+            <input
+              type="text"
+              formControlName="name"
+              class="form-input"
+              [class.error]="submitted && f['name'].errors"
+            />
+          </div>
+
+          <!-- Category -->
+          <div class="form-group">
+            <label class="form-label">Category *</label>
+            <select formControlName="category" class="form-select">
+              <option value="decor">Decor & Living</option>
+              <option value="furniture">Furniture</option>
+              <option value="lighting">Lighting</option>
+              <option value="kitchenware">Kitchenware</option>
+              <option value="apparel">Apparel & Merch</option>
+            </select>
+          </div>
+
+          <!-- Price -->
+          <div class="form-group">
+            <label class="form-label">Price ($) *</label>
+            <input
+              type="number"
+              step="0.01"
+              min="0"
+              formControlName="price"
+              class="form-input"
+            />
+          </div>
+
+          <!-- Stock -->
+          <div class="form-group">
+            <label class="form-label">Stock Quantity *</label>
+            <input
+              type="number"
+              min="0"
+              formControlName="stock"
+              class="form-input"
+            />
+          </div>
+
+          <!-- Image URL -->
+          <div class="form-group">
+            <label class="form-label">Image URL</label>
+            <input
+              type="url"
+              formControlName="image"
+              class="form-input"
+            />
+          </div>
+
+          <!-- Description -->
+          <div class="form-group full-width">
+            <label class="form-label">Description</label>
+            <textarea
+              formControlName="description"
+              rows="3"
+              class="form-textarea">
+            </textarea>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn-cancel" (click)="closeEditModal()">Cancel</button>
+          <button type="submit" class="btn-confirm-primary" [disabled]="actionLoading()">
+            <span *ngIf="!actionLoading()">Save</span>
+            <span *ngIf="actionLoading()">Saving...</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 4. POPUP: PRODUCTS INVENTORY HUB DIALOG -->
+  <div class="modal-overlay" *ngIf="isInventoryModalOpen()" (click)="closeInventoryModal()">
+    <div class="modal-dialog brutalist-modal modal-xl" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span class="modal-overline">CENTRAL INVENTORY MANAGER</span>
+          <h2 class="modal-title">📦 Products Management Hub</h2>
+        </div>
+        <div class="modal-header-actions">
+          <button (click)="openCreateModal(); closeInventoryModal()" class="btn-action-primary btn-sm">
+            ➕ New Product
+          </button>
+          <button class="modal-close-btn" (click)="closeInventoryModal()">✕</button>
+        </div>
+      </div>
+
+      <div class="modal-body">
+        <!-- Search & Filter Bar -->
+        <div class="hub-filter-bar">
+          <input
+            type="text"
+            placeholder="🔍 Search products by name, description, category..."
+            class="hub-search-input"
+            [value]="productSearchQuery()"
+            (input)="onSearchChange($event)"
+          />
+          <div class="category-pills">
+            <button
+              [class.active]="selectedCategory() === 'all'"
+              (click)="onCategoryFilterChange('all')"
+              class="cat-pill">All</button>
+            <button
+              [class.active]="selectedCategory() === 'decor'"
+              (click)="onCategoryFilterChange('decor')"
+              class="cat-pill">Decor</button>
+            <button
+              [class.active]="selectedCategory() === 'furniture'"
+              (click)="onCategoryFilterChange('furniture')"
+              class="cat-pill">Furniture</button>
+            <button
+              [class.active]="selectedCategory() === 'lighting'"
+              (click)="onCategoryFilterChange('lighting')"
+              class="cat-pill">Lighting</button>
+            <button
+              [class.active]="selectedCategory() === 'kitchenware'"
+              (click)="onCategoryFilterChange('kitchenware')"
+              class="cat-pill">Kitchenware</button>
+          </div>
+        </div>
+
+        <!-- Products Table -->
+        <div class="table-container hub-table-container">
+          <table class="brutalist-table">
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>Category</th>
+                <th>Price</th>
+                <th>Stock</th>
+                <th class="text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let prod of filteredProducts()">
+                <td>
+                  <div class="product-cell-group">
+                    <img *ngIf="prod.image" [src]="prod.image" class="prod-thumb" alt="" />
+                    <div>
+                      <strong class="item-name">{{ prod.name }}</strong>
+                      <small class="muted-text block">{{ prod._id }}</small>
+                    </div>
+                  </div>
+                </td>
+                <td><span class="tag">{{ prod.category }}</span></td>
+                <td class="price-cell">${{ prod.price | number:'1.2-2' }}</td>
+                <td>
+                  <span class="stock-badge" [class.out-badge]="prod.stock <= 0">
+                    {{ prod.stock }} left
+                  </span>
+                </td>
+                <td class="text-right">
+                  <div class="row-actions">
+                    <button (click)="openRestockModal(prod); closeInventoryModal()" class="btn-sm btn-restock">
+                      ⚡ Restock
+                    </button>
+                    <button (click)="openEditModal(prod); closeInventoryModal()" class="btn-sm btn-edit">
+                      ✏️ Edit
+                    </button>
+                    <button (click)="openDeleteModal(prod._id, prod.name)" class="btn-sm btn-delete">
+                      🗑️
+                    </button>
+                  </div>
+                </td>
+              </tr>
+              <tr *ngIf="filteredProducts().length === 0">
+                <td colspan="5" class="empty-cell">No products match your search.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <span class="footer-count">Total: {{ filteredProducts().length }} product listings</span>
+        <button type="button" class="btn-cancel" (click)="closeInventoryModal()">Close Hub</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. POPUP: DELETE CONFIRMATION DIALOG -->
+  <div class="modal-overlay" *ngIf="isDeleteModalOpen()" (click)="closeDeleteModal()">
+    <div class="modal-dialog brutalist-modal modal-sm" (click)="$event.stopPropagation()">
+      <div class="modal-header danger-header">
+        <div class="modal-title-group">
+          <span class="modal-overline text-danger">PERMANENT ACTION</span>
+          <h2 class="modal-title">🗑️ Delete Product?</h2>
+        </div>
+        <button class="modal-close-btn" (click)="closeDeleteModal()">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <p class="delete-msg">
+          Are you sure you want to permanently delete:
+          <br />
+          <strong>"{{ deletingProductName() }}"</strong>?
+        </p>
+        <small class="text-danger block">This action cannot be undone and will remove it from store analytics.</small>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn-cancel" (click)="closeDeleteModal()">Cancel</button>
+        <button
+          type="button"
+          class="btn-danger-confirm"
+          [disabled]="actionLoading()"
+          (click)="confirmDelete()">
+          <span *ngIf="!actionLoading()">Yes, Delete Product</span>
+          <span *ngIf="actionLoading()">Deleting...</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>

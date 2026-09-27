@@ -101,6 +101,15 @@ export const PaymentService = {
     }
   },
 
+  async recordTransaction(payload: { orderId: string; transactionId?: string; paymobOrderId?: string }): Promise<any> {
+    try {
+      const response = await axiosInstance.post<ApiResponse<any>>('/payment/record-transaction', payload);
+      return await handleApiResponse<any>(response);
+    } catch (error) {
+      throw handleCentralError(error);
+    }
+  },
+
   async voidPayment(orderId: string): Promise<any> {
     try {
       const response = await axiosInstance.post<ApiResponse<any>>('/payment/void', { orderId });

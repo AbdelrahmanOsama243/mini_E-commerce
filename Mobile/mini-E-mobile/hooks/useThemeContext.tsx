@@ -5,12 +5,12 @@ import { Colors, Shadows, type ThemeColors } from '../constants/theme';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-type ThemeMode = 'light' | 'dark';
+export type ThemeMode = 'light' | 'dark';
 
 interface ThemeContextValue {
   mode: ThemeMode;
   colors: ThemeColors;
-  shadows: typeof Shadows.light;
+  shadows: typeof Shadows.light | typeof Shadows.dark;
   isDark: boolean;
   toggleTheme: () => void;
   setTheme: (mode: ThemeMode) => void;
@@ -54,7 +54,7 @@ export function KoshkThemeProvider({ children, initialMode }: ThemeProviderProps
         setMode(systemScheme === 'dark' ? 'dark' : 'light');
         setIsLoaded(true);
       });
-  }, [initialMode, systemScheme]);
+  }, []); // Only run on mount — initialMode is only used for first render
 
   const toggleTheme = useCallback(() => {
     setMode((prev) => {
@@ -70,15 +70,18 @@ export function KoshkThemeProvider({ children, initialMode }: ThemeProviderProps
   }, []);
 
   const value = useMemo<ThemeContextValue>(
-    () => ({
-      mode,
-      colors: Colors[mode],
-      shadows: Shadows[mode],
-      isDark: mode === 'dark',
-      toggleTheme,
-      setTheme,
-      isLoaded,
-    }),
+    () => {
+      const isDark = mode === 'dark';
+      return {
+        mode,
+        colors: isDark ? Colors.dark : Colors.light,
+        shadows: isDark ? Shadows.dark : Shadows.light,
+        isDark,
+        toggleTheme,
+        setTheme,
+        isLoaded,
+      };
+    },
     [mode, toggleTheme, setTheme, isLoaded],
   );
 

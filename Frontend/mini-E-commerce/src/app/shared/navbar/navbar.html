@@ -132,6 +132,12 @@
       </div>
       @if (isLoggedIn()) {
         <a
+          routerLink="/dashboard"
+          routerLinkActive="bg-primary text-on-primary"
+          class="text-primary hover:bg-primary hover:text-on-primary transition-colors px-2 py-1"
+          >Dashboard</a
+        >
+        <a
           routerLink="/orders"
           routerLinkActive="bg-primary text-on-primary"
           class="text-primary hover:bg-primary hover:text-on-primary transition-colors px-2 py-1"
@@ -139,10 +145,10 @@
         >
         @if (isAdmin()) {
           <a
-            routerLink="/admin/products"
+            routerLink="/admin/dashboard"
             routerLinkActive="bg-primary-container text-primary"
             class="bg-primary-container text-primary border-2 border-primary hover:bg-primary hover:text-on-primary transition-colors px-2 py-1 font-bold"
-            >Admin</a
+            >Admin Analytics</a
           >
         }
       }
@@ -379,6 +385,12 @@
 
     @if (isLoggedIn()) {
       <a
+        routerLink="/dashboard"
+        (click)="toggleMobileMenu()"
+        class="hover:bg-primary hover:text-on-primary transition-colors px-2 py-2"
+        >Dashboard</a
+      >
+      <a
         routerLink="/orders"
         (click)="toggleMobileMenu()"
         class="hover:bg-primary hover:text-on-primary transition-colors px-2 py-2"
@@ -386,10 +398,10 @@
       >
       @if (isAdmin()) {
         <a
-          routerLink="/admin/products"
+          routerLink="/admin/dashboard"
           (click)="toggleMobileMenu()"
           class="bg-primary-container border-2 border-primary text-primary hover:bg-primary hover:text-on-primary px-2 py-2"
-          >Admin Dashboard</a
+          >Admin Analytics</a
         >
       }
       <button

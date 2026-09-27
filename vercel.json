@@ -1,15 +1,8 @@
 {
-  "version": 2,
-  "builds": [
-    {
-      "src": "Backend/server.js",
-      "use": "@vercel/node"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "Backend/server.js"
-    }
+  "installCommand": "cd Frontend/mini-E-commerce && npm ci",
+  "buildCommand": "cd Frontend/mini-E-commerce && npm run build -- --configuration production",
+  "outputDirectory": "Frontend/mini-E-commerce/dist/mini-E-commerce/browser",
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }

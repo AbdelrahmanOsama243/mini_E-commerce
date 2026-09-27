@@ -30,10 +30,13 @@ export const usePaymentStore = create<PaymentState>((set) => ({
     }
   },
 
-  checkPaymentStatus: async (orderId: string) => {
+  checkPaymentStatus: async (orderId: string): Promise<'paid' | 'failed' | 'pending'> => {
     try {
       const res = await PaymentService.getPaymentStatus(orderId);
-      return res.status;
+      if (res.status === 'paid' || res.status === 'failed' || res.status === 'pending') {
+        return res.status;
+      }
+      return 'pending';
     } catch (error) {
       console.error("Failed to check payment status", error);
       return 'pending';

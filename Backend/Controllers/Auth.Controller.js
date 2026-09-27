@@ -312,13 +312,11 @@ const resendVerification = asyncHandler(async (req, res) => {
   if (!name) throw new ApiError(400, "Name is required");
   if (!password) throw new ApiError(400, "Password is required");
 
-  // Check if already registered
+  // Check if already registered — always return same message to prevent email enumeration
   const existingUser = await UserRepo.findUserByEmail(email);
-  if (existingUser) {
-    if (existingUser.isVerified) {
-      throw new ApiError(409, "This email is already verified. Please log in.");
-    }
-    throw new ApiError(409, "This email is already registered but unverified.");
+  if (existingUser && existingUser.isVerified) {
+    // Don't reveal that the email is already registered and verified
+    return sendSuccess(res, null, "If this email is registered, a verification link has been sent.", 200);
   }
 
   // Hash password and generate a fresh verification JWT
@@ -369,6 +367,64 @@ const resetPassword = asyncHandler(async (req, res) => {
   sendSuccess(res, null, "Password has been successfully reset. You can now log in.", 200);
 });
 
+const getAllUsers = asyncHandler(async (req, res, next) => {
+  const page = Math.max(parseInt(req.query.page) || 1, 1);
+  const limit = Math.min(Math.max(parseInt(req.query.limit) || 10, 1), 100);
+  const result = await UserRepo.findAll(
+    { role: { $ne: "admin" } },
+    { page, limit, select: "-password" }
+  );
+  return sendSuccess(res, { items: result.items, total: result.total, page: result.page, limit: result.limit });
+});
+
+const updateUserStatus = asyncHandler(async (req, res, next) => {
+  const { id } = req.params;
+  const { status } = req.body;
+
+  if (!["active", "suspended"].includes(status)) {
+    throw new ApiError(400, "Invalid status. Must be 'active' or 'suspended'");
+  }
+
+  const user = await UserRepo.model.findByIdAndUpdate(
+    id,
+    { status },
+    { new: true, runValidators: true, select: "-password" }
+  );
+
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+  // If suspending, revoke all refresh tokens
+  if (status === "suspended") {
+    await jwtServices.revokeAllRefreshTokens(user._id);
+  }
+
+  return sendSuccess(res, user, `User ${status === "suspended" ? "suspended" : "activated"} successfully`);
+});
+
+const deleteUser = asyncHandler(async (req, res, next) => {
+  const { id } = req.params;
+
+  // Prevent self-deletion
+  if (id === (req.user?._id || req.user?.id)?.toString()) {
+    throw new ApiError(400, "You cannot delete your own account");
+  }
+
+  const user = await UserRepo.model.findByIdAndDelete(id);
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+  // Revoke all refresh tokens
+  await jwtServices.revokeAllRefreshTokens(user._id);
+
+  // Delete user's cart
+  await CartRepo.model.findOneAndDelete({ userId: user._id });
+
+  return sendSuccess(res, null, "User deleted successfully");
+});
+
 module.exports = {
   register,
   login,
@@ -380,4 +436,7 @@ module.exports = {
   forgetPassword,
   resetPassword,
   resendVerification,
+  getAllUsers,
+  updateUserStatus,
+  deleteUser,
 };

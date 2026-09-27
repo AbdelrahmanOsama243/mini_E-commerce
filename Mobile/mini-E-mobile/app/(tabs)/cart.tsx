@@ -22,6 +22,7 @@ import { CartService, Cart, CartItem } from "@/Services/Cart.Service";
 import { moderateScale } from "@/Utils/responsive";
 import { Product } from "@/Services/Product.Service";
 import { OrderService } from "@/Services/Order.Service";
+import { showSuccess, showError, showInfo } from "@/Utils/toast";
 
 const SHIPPING_COST = 9.99;
 const TAX_RATE = 0.08;
@@ -42,6 +43,13 @@ export default function CartScreen() {
   const [address, setAddress] = useState("");
   const [checkoutLoading, setCheckoutLoading] = useState(false);
 
+  // Auto-show address input when checkout is clicked
+  useEffect(() => {
+    if (isCheckingOut && !address) {
+      // Address input is shown inline
+    }
+  }, [isCheckingOut]);
+
   useEffect(() => {
     loadCart();
   }, [loadCart]);
@@ -55,25 +63,34 @@ export default function CartScreen() {
     try {
       await updateQuantity(itemId, newQty);
     } catch (err: any) {
-      Alert.alert("Error", err.message || "Failed to update quantity");
+      showError("Cart Update Failed", err);
     }
   };
 
   const handleRemoveItem = async (itemId: string) => {
     try {
       await removeItem(itemId);
+      showSuccess("Item Removed", "The item was removed from your cart.");
     } catch (err: any) {
-      Alert.alert("Error", err.message || "Failed to remove item");
+      showError("Failed to Remove Item", err);
     }
   };
 
   const handleCheckout = () => {
     if (items.length === 0) {
-      Alert.alert("Error", "Your cart is empty");
+      showInfo("Cart is Empty", "Add items to your cart before proceeding to checkout.");
       return;
     }
-    // Navigate to the new payment checkout screen
-    router.push("../../../payment/checkout");
+    if (!isCheckingOut) {
+      setIsCheckingOut(true);
+      return;
+    }
+    if (!address.trim() || address.trim().length < 5) {
+      showInfo("Address Required", "Please enter a valid shipping address (minimum 5 characters).");
+      return;
+    }
+    setCheckoutLoading(true);
+    router.push("/payment/checkout");
   };
 
   const clearCart = async () => {
@@ -85,8 +102,9 @@ export default function CartScreen() {
         onPress: async () => {
           try {
             await storeClearCart();
+            showSuccess("Cart Cleared", "All items have been removed from your cart.");
           } catch (err: any) {
-            Alert.alert("Error", err.message || "Failed to clear cart");
+            showError("Failed to Clear Cart", err);
           }
         },
       },
@@ -347,10 +365,10 @@ export default function CartScreen() {
                 checkoutLoading
                   ? "PROCESSING..."
                   : isCheckingOut
-                    ? "CONFIRM ORDER"
+                    ? "PROCEED TO PAYMENT"
                     : "PROCEED TO CHECKOUT"
               }
-              variant="primary"
+              variant="success"
               size="lg"
               fullWidth
               style={styles.checkoutBtn}
@@ -465,5 +483,14 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
   },
   totalRow: { borderBottomWidth: 0, paddingTop: Spacing.md },
-  checkoutBtn: { marginTop: Spacing.lg },
+  checkoutBtn: {
+    marginTop: Spacing.lg,
+    borderRadius: Borders.radius.sm,
+    height: 52,
+    shadowColor: '#10B981',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 3,
+  },
 });

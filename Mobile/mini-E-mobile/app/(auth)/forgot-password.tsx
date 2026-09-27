@@ -18,6 +18,7 @@ import {
 import { Borders, Spacing } from "@/constants/theme";
 import { AuthService } from "@/Services/Auth.Service";
 import { moderateScale } from "@/Utils/responsive";
+import { showSuccess, showError, showInfo } from "@/Utils/toast";
 
 export default function ForgotPasswordScreen() {
   const { colors } = useTheme();
@@ -30,10 +31,12 @@ export default function ForgotPasswordScreen() {
   const handleSubmit = async () => {
     if (!email.trim()) {
       setError("Email is required");
+      showInfo("Required Field", "Please enter your email address.");
       return;
     }
     if (!/\S+@\S+\.\S+/.test(email)) {
       setError("Invalid email format");
+      showInfo("Invalid Email", "Please enter a valid email address.");
       return;
     }
 
@@ -43,9 +46,9 @@ export default function ForgotPasswordScreen() {
     try {
       await AuthService.forgetPassword(email);
       setEmailSent(true);
-      Alert.alert("Success", "Password reset link sent to your email.");
+      showSuccess("Email Sent", "Password reset instructions have been sent to your email.");
     } catch (err: any) {
-      Alert.alert("Error", err.message || "Failed to send reset link");
+      showError("Request Failed", err);
     } finally {
       setLoading(false);
     }

@@ -2,6 +2,12 @@ const mongoose = require('mongoose');
 
 const productSchema = new mongoose.Schema(
   {
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+      index: true
+    },
     name: {
       type: String,
       required: true
@@ -33,5 +39,10 @@ const productSchema = new mongoose.Schema(
     timestamps: true
   }
 );
+
+// Indexes for common queries
+productSchema.index({ category: 1 });
+productSchema.index({ name: 'text', description: 'text' });
+productSchema.index({ createdBy: 1 });
 
 module.exports = mongoose.model('Product', productSchema);

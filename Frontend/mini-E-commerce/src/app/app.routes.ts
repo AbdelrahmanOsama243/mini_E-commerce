@@ -14,6 +14,8 @@ import { CheckoutComponent } from './Feather/checkout-page/checkout-page';
 import { OrderHistoryComponent } from './Feather/orders/order-list/order-list';
 import { OrderDetailComponent } from './Feather/orders/order-detail/order-detail';
 import { AdminProductsComponent } from './Feather/admin-products/product-table/product-table';
+import { UserDashboardComponent } from './Feather/dashboard/user-dashboard/user-dashboard';
+import { AdminDashboardComponent } from './Feather/dashboard/admin-dashboard/admin-dashboard';
 import { PaymentIframeComponent } from './Feather/payment/payment-iframe/payment-iframe';
 import { FawryReferenceComponent } from './Feather/payment/fawry-reference/fawry-reference';
 import { PaymentSuccessComponent } from './Feather/payment/payment-success/payment-success';
@@ -83,6 +85,11 @@ export const routes: Routes = [
     canActivate: [AuthGuard]
   },
   {
+    path: 'dashboard',
+    component: UserDashboardComponent,
+    canActivate: [AuthGuard]
+  },
+  {
     path: 'orders',
     component: OrderHistoryComponent,
     canActivate: [AuthGuard]
@@ -91,6 +98,11 @@ export const routes: Routes = [
     path: 'orders/:id',
     component: OrderDetailComponent,
     canActivate: [AuthGuard]
+  },
+  {
+    path: 'admin/dashboard',
+    component: AdminDashboardComponent,
+    canActivate: [AuthGuard, AdminGuard]
   },
   {
     path: 'admin/products',

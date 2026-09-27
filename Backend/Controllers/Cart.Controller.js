@@ -7,7 +7,7 @@ const ApiError = require('../Utils/ApiError');
 
 const getCart = [
   asyncHandler(async (req, res, next) => {
-    const userId = req.user?.id;
+    const userId = req.user?._id;
 
     if (userId) {
       // Authenticated User Flow
@@ -42,7 +42,7 @@ const getCart = [
 const addItemToCart = [
   asyncHandler(async (req, res, next) => {
     const { productId, quantity } = req.body;
-    const userId = req.user?.id;
+    const userId = req.user?._id;
 
     const product = await ProductsRepo.findById(productId);
     if (!product) {
@@ -107,7 +107,7 @@ const updateCartItemQuantity = [
   asyncHandler(async (req, res, next) => {
     const { itemId } = req.params;
     const { quantity } = req.body;
-    const userId = req.user?.id;
+    const userId = req.user?._id;
 
     if (userId) {
       // Authenticated Flow
@@ -139,6 +139,7 @@ const updateCartItemQuantity = [
       if (!item) return next(new ApiError(404, 'Item not found in guest cart'));
 
       const product = await ProductsRepo.findById(item.productId);
+      if (!product) return next(new ApiError(404, 'Product not found'));
       if (quantity > product.stock) {
         return next(new ApiError(400, `Requested quantity exceeds available stock (${product.stock} left)`));
       }
@@ -153,7 +154,7 @@ const updateCartItemQuantity = [
 const removeItemFromCart = [
   asyncHandler(async (req, res, next) => {
     const { itemId } = req.params;
-    const userId = req.user?.id;
+    const userId = req.user?._id;
 
     if (userId) {
       // Authenticated Flow
@@ -182,7 +183,7 @@ const removeItemFromCart = [
 
 const clearCart = [
   asyncHandler(async (req, res, next) => {
-    const userId = req.user?.id;
+    const userId = req.user?._id;
 
     if (userId) {
       let existingCart = await CartRepo.getCartDocumentByUserId(userId);
@@ -201,7 +202,7 @@ const clearCart = [
 
 const mergeCart = [
   asyncHandler(async (req, res, next) => {
-    const userId = req.user?.id;
+    const userId = req.user?._id;
     const { items: guestItems } = req.body;
 
     let existingCart = await CartRepo.getCartDocumentByUserId(userId);

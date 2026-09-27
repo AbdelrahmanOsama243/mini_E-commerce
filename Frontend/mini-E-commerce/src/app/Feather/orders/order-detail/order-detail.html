@@ -148,9 +148,10 @@
                 </button>
               </div>
             </div>
+          }
 
-            <!-- Admin Refund Trigger -->
-            @if (ord.status !== 'refunded') {
+          <!-- Refund Trigger -->
+          @if (ord.status !== 'refunded' && ord.status !== 'cancelled' && ord.status !== 'failed') {
               <div class="bg-surface-container border-4 border-primary p-6 brutalist-shadow flex flex-col gap-3">
                 <h3 class="font-headline font-black text-xl uppercase border-b-2 border-primary pb-2">
                   Payment Refund
@@ -166,7 +167,6 @@
                 </button>
               </div>
             }
-          }
         </aside>
       </div>
     </div>

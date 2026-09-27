@@ -61,6 +61,7 @@ async function refreshAccessToken(): Promise<string | null> {
 
 export const axiosInstance = axios.create({
   baseURL: BASE_URL,
+  timeout: 30000, // 30 second timeout
   headers: {
     'Content-Type': 'application/json',
   },
@@ -74,6 +75,7 @@ axiosInstance.interceptors.request.use(
     // Redis server-side caching stays fully functional
     config.headers['Cache-Control'] = 'no-cache';
     config.headers['If-None-Match'] = '';
+    config.headers['ngrok-skip-browser-warning'] = 'true';
 
     const shouldAttachToken = !config.skipAuth && !isPublicEndpoint(config.url);
 

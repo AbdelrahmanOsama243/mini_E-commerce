@@ -34,12 +34,46 @@ export const useCartStore = create<CartState>((set) => ({
   },
 
   addItem: async (payload) => {
+    const { accessToken } = await TokenStorage.getStoredTokens();
+    const currentCart = useCartStore.getState().cart;
+
+    // Optimistic update for authenticated users
+    if (accessToken && currentCart) {
+      const existingItem = currentCart.items.find(i => {
+        const pid = typeof i.productId === 'string' ? i.productId : i.productId?._id;
+        return pid === payload.productId;
+      });
+      let optimisticCart;
+      if (existingItem) {
+        optimisticCart = {
+          ...currentCart,
+          items: currentCart.items.map(i => {
+            const pid = typeof i.productId === 'string' ? i.productId : i.productId?._id;
+            return pid === payload.productId ? { ...i, quantity: i.quantity + payload.quantity } : i;
+          }),
+        };
+      } else {
+        optimisticCart = {
+          ...currentCart,
+          items: [...currentCart.items, {
+            _id: Date.now().toString(),
+            productId: payload.product || payload.productId,
+            quantity: payload.quantity,
+          }],
+        };
+      }
+      set({ cart: optimisticCart });
+    }
+
     set({ loading: true });
     try {
-      const { accessToken } = await TokenStorage.getStoredTokens();
       const updatedCart = await CartService.addItemToCart(payload, accessToken || undefined);
       set({ cart: updatedCart });
     } catch (error) {
+      // Rollback on failure
+      if (accessToken && currentCart) {
+        set({ cart: currentCart });
+      }
       console.error('Failed to add item:', error);
       throw error;
     } finally {

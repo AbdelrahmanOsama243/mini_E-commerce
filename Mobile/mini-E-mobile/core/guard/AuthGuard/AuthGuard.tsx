@@ -30,7 +30,13 @@ export function AuthGuard({ children }: AuthGuardProps) {
   async function checkAuth() {
     try {
       const { accessToken } = await TokenStorage.getStoredTokens();
-      setIsLoggedIn(!!accessToken);
+      if (!accessToken) {
+        setIsLoggedIn(false);
+        return;
+      }
+      // Validate token by calling getMe — if it fails, token is expired/invalid
+      await AuthService.getMe(accessToken);
+      setIsLoggedIn(true);
     } catch {
       setIsLoggedIn(false);
     } finally {
@@ -90,7 +96,13 @@ export function AdminGuard({ children }: AdminGuardProps) {
 
   async function checkAdmin() {
     try {
-      const user: User | null = await TokenStorage.getStoredUser();
+      const { accessToken } = await TokenStorage.getStoredTokens();
+      if (!accessToken) {
+        setIsAdmin(false);
+        return;
+      }
+      // Validate against backend in case role was changed server-side
+      const user = await AuthService.getMe(accessToken);
       setIsAdmin(user?.role === 'admin');
     } catch {
       setIsAdmin(false);

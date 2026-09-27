@@ -33,8 +33,51 @@ const startOrderWorker = () => {
         logger.error({ err: error.message, orderId }, "Order processing failed (stock issue)");
         // Update order status to 'failed' since stock was not sufficient
         await OrdersRepository.update(orderId, { status: "failed" });
+
+        // Restore cart items for the user so they don't lose their selections
+        try {
+          const failedOrder = await OrdersRepository.findById(orderId);
+          if (failedOrder && failedOrder.items && failedOrder.items.length > 0) {
+            const cartItems = failedOrder.items.map(item => ({
+              productId: item.productId,
+              quantity: item.quantity,
+            }));
+            const existingCart = await require("../Repos/Carts.Repo").getCartDocumentByUserId(failedOrder.userId);
+            if (existingCart) {
+              // Merge restored items back into cart
+              const cartMap = new Map();
+              existingCart.items.forEach(item => {
+                cartMap.set(item.productId.toString(), item.quantity);
+              });
+              for (const item of cartItems) {
+                const existingQty = cartMap.get(item.productId.toString()) || 0;
+                cartMap.set(item.productId.toString(), existingQty + item.quantity);
+              }
+              const mergedItems = Array.from(cartMap, ([productId, quantity]) => ({
+                _id: new (require("mongoose").Types.ObjectId)(),
+                productId,
+                quantity,
+              }));
+              await require("../Repos/Carts.Repo").updateCart(existingCart._id, mergedItems);
+            } else {
+              // Create new cart with restored items
+              await require("../Repos/Carts.Repo").createCart(failedOrder.userId);
+              const newCart = await require("../Repos/Carts.Repo").getCartDocumentByUserId(failedOrder.userId);
+              const restoredItems = cartItems.map(item => ({
+                _id: new (require("mongoose").Types.ObjectId)(),
+                productId: item.productId,
+                quantity: item.quantity,
+              }));
+              await require("../Repos/Carts.Repo").updateCart(newCart._id, restoredItems);
+            }
+            logger.info({ orderId }, "Cart restored after order failure");
+          }
+        } catch (restoreErr) {
+          logger.error({ err: restoreErr.message, orderId }, "Failed to restore cart after order failure");
+        }
+
         // Throwing error marks the job as failed in BullMQ
-        throw error; 
+        throw error;
       }
     },
     {

@@ -83,6 +83,12 @@ export const CartService = {
         });
       }
 
+      // Normalize all productIds to strings for consistency
+      cart.items = cart.items.map(item => ({
+        ...item,
+        productId: typeof item.productId === 'object' ? item.productId._id : item.productId,
+      }));
+
       await AsyncStorage.setItem(GUEST_CART_KEY, JSON.stringify(cart));
       return cart;
     }

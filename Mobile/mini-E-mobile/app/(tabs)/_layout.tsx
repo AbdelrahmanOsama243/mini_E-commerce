@@ -79,6 +79,17 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="analytics"
+        options={{
+          title: 'Dashboard',
+          tabBarIcon: ({ color, focused }) => (
+            <View style={focused ? [styles.activeIcon, { borderColor: colors.primary }] : undefined}>
+              <IconSymbol size={24} name="chart.bar.fill" color={color} />
+            </View>
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="account"
         options={{
           title: 'Account',
@@ -99,7 +110,12 @@ export default function TabLayout() {
         name="admin-dashboard"
         options={{
           href: null, // Hidden from tab bar
-          title: 'DASHBOARD',
+          title: 'Dashboard',
+          tabBarIcon: ({ color, focused }) => (
+            <View style={focused ? [styles.activeIcon, { borderColor: colors.primary }] : undefined}>
+              <IconSymbol size={24} name="chart.bar.fill" color={color} />
+            </View>
+          ),
         }}
       />
     </Tabs>

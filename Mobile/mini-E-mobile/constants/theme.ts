@@ -31,6 +31,7 @@ export const Palette = {
   grey700: '#333333',
   grey800: '#222222',
   success: '#2A9D8F',
+  accentGreen: '#10B981',
   warning: '#E9C46A',
   danger: '#E76F51',
 } as const;
@@ -110,7 +111,7 @@ export const Colors = {
   },
 } as const;
 
-export type ThemeColors = typeof Colors.light;
+export type ThemeColors = typeof Colors.light | typeof Colors.dark;
 
 // ─── Typography ──────────────────────────────────────────────────────────────
 

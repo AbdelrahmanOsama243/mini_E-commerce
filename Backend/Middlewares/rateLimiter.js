@@ -27,7 +27,19 @@ const authLimiter = rateLimit({
   message: { success: false, message: "Too many authentication attempts, please try again later." },
 });
 
+// Rate Limiting — Payment routes (prevent payment fraud/spam)
+// 20 requests per 15 minutes per user/IP
+const paymentLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => req.user?.id || req.ip,
+  message: { success: false, message: "Too many payment attempts, please try again later." },
+});
+
 module.exports = {
   globalLimiter,
   authLimiter,
+  paymentLimiter,
 };

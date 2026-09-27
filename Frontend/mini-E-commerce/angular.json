@@ -71,6 +71,10 @@
         },
         "serve": {
           "builder": "@angular/build:dev-server",
+          "options": {
+            "proxyConfig": "proxy.conf.json",
+            "allowedHosts": ["all", "retype-pesky-prowling.ngrok-free.dev", ".ngrok-free.dev", ".ngrok-free.app", ".ngrok.io"]
+          },
           "configurations": {
             "production": {
               "buildTarget": "mini-E-commerce:build:production"

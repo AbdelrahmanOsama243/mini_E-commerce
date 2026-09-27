@@ -7,6 +7,7 @@ import {
   Text,
   Platform,
   Alert,
+  TouchableOpacity,
 } from "react-native";
 import { useRouter, Link } from "expo-router";
 import { useTheme } from "@/hooks/useThemeContext";
@@ -20,6 +21,7 @@ import { Borders, Spacing, Palette } from "@/constants/theme";
 import { AuthService } from "@/Services/Auth.Service";
 import { moderateScale } from "@/Utils/responsive";
 import { useAuthStore } from "@/store/authStore";
+import { showSuccess, showError, showInfo } from "@/Utils/toast";
 
 export default function LoginScreen() {
   const { colors, isDark } = useTheme();
@@ -30,6 +32,7 @@ export default function LoginScreen() {
   const [errors, setErrors] = useState<{ email?: string; password?: string }>(
     {},
   );
+  const [resendingVerification, setResendingVerification] = useState(false);
 
   const login = useAuthStore((state) => state.login);
 
@@ -39,9 +42,14 @@ export default function LoginScreen() {
     else if (!/\S+@\S+\.\S+/.test(email))
       newErrors.email = "Invalid email format";
     if (!password.trim()) newErrors.password = "Password is required";
-    else if (password.length < 6) newErrors.password = "Minimum 6 characters";
+    else if (password.length < 8) newErrors.password = "Minimum 8 characters";
+    else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])/.test(password)) newErrors.password = "Must contain uppercase, lowercase, number & special character";
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    const isValid = Object.keys(newErrors).length === 0;
+    if (!isValid) {
+      showInfo("Validation Error", "Please fill in all required fields correctly.");
+    }
+    return isValid;
   };
 
   const handleLogin = async () => {
@@ -49,11 +57,33 @@ export default function LoginScreen() {
     setLoading(true);
     try {
       await login({ email, password });
+      showSuccess("Welcome Back!", "You have signed in successfully.");
       router.replace("/(tabs)");
     } catch (err: any) {
-      Alert.alert("Login Failed", err.message || "Invalid credentials");
+      showError("Login Failed", err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResendVerification = async () => {
+    if (!email.trim() || !/\S+@\S+\.\S+/.test(email)) {
+      showInfo("Email Required", "Please enter your email address first.");
+      return;
+    }
+    if (!password.trim()) {
+      showInfo("Password Required", "Please enter your password to resend verification.");
+      return;
+    }
+    setResendingVerification(true);
+    try {
+      await AuthService.resendVerification({ name: "User", email: email.trim(), password });
+      showSuccess("Verification Sent", "If this email is registered, a verification link has been sent.");
+    } catch (err: any) {
+      // Don't reveal if email exists or not
+      showSuccess("Verification Sent", "If this email is registered, a verification link has been sent.");
+    } finally {
+      setResendingVerification(false);
     }
   };
 
@@ -125,6 +155,11 @@ export default function LoginScreen() {
               </KoshkText>
             </Link>
           </View>
+          <TouchableOpacity onPress={handleResendVerification} disabled={resendingVerification}>
+            <KoshkText variant="caption" color={colors.secondary} bold>
+              {resendingVerification ? 'Sending...' : 'Resend Verification Email'}
+            </KoshkText>
+          </TouchableOpacity>
           <KoshkButton
             title="SIGN IN"
             variant="primary"

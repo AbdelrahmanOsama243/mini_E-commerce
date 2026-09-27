@@ -592,12 +592,17 @@ async function seed() {
 
     // 2. Seed Products (التحديث أو الإدخال الآمن للمنتجات)
     console.log("⏳ Seeding Products...");
+    const adminUser = upsertedUsers.find(u => u.role === "admin") || upsertedUsers[0];
     const upsertedProducts = [];
-    for (const p of products) {
-      // البحث باسم المنتج لضمان عدم التكرار
+    for (let i = 0; i < products.length; i++) {
+      const p = products[i];
+      // Alternate admins if multiple exist, or default to first admin
+      const admins = upsertedUsers.filter(u => u.role === "admin");
+      const assignedAdmin = admins.length > 0 ? admins[i % admins.length] : adminUser;
+      
       const product = await Product.findOneAndUpdate(
         { name: p.name },
-        { $set: p },
+        { $set: { ...p, createdBy: assignedAdmin._id } },
         { upsert: true, returnDocument: 'after' }
       );
       upsertedProducts.push(product);

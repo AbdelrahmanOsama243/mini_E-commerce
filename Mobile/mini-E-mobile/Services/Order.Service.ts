@@ -56,9 +56,9 @@ export const OrderService = {
   async getOrders(all: boolean = false): Promise<Order[]> {
     try {
       const queryString = all ? '?all=true' : '';
-      const response = await axiosInstance.get<ApiResponse<Order[]>>(`/orders${queryString}`);
-
-      return await handleApiResponse<Order[]>(response);
+      const response = await axiosInstance.get<ApiResponse<{ items: Order[]; total: number; page: number; limit: number }>>(`/orders${queryString}`);
+      const data = await handleApiResponse<{ items: Order[]; total: number; page: number; limit: number }>(response);
+      return data?.items || [];
     } catch (error) {
       throw handleCentralError(error);
     }

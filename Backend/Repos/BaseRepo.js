@@ -15,9 +15,12 @@ class BaseRepo {
     if (lean) query = query.lean();
     if (session) query = query.session(session);
 
+    let countQuery = this.model.countDocuments(filter);
+    if (session) countQuery = countQuery.session(session);
+
     const [items, total] = await Promise.all([
       query.exec(),
-      this.model.countDocuments(filter).session(session)
+      countQuery
     ]);
 
     return { items, total, page, limit: Number(limit) };

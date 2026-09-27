@@ -2,6 +2,7 @@
 
 export interface Product {
   _id: string;
+  createdBy?: string;
   name: string;
   description?: string;
   price: number;

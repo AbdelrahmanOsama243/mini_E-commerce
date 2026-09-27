@@ -6,6 +6,8 @@ const { validateZod, authSchemas } = require("../Middlewares/zodValidator");
 // const { validateJoi, authSchemas } = require("../Middlewares/joiValidator");
 
 const router = express.Router();
+const { authorize } = require("../Middlewares/authorize.middleware");
+const { validateObjectId } = require("../Middlewares/validateObjectId");
 
 router.post("/register", validateZod(authSchemas.register), userController.register);
 router.post("/login", validateZod(authSchemas.login), userController.login);
@@ -18,5 +20,10 @@ router.get("/me", authentication, userController.getMe);
 router.put("/me", authentication, validateZod(authSchemas.updateUserProfile), userController.updateUserProfile);
 router.get("/verify-email/:token", userController.verifyEmail);
 router.post("/resend-verification", userController.resendVerification);
+
+// Admin user management routes
+router.get("/admin/users", authentication, authorize("admin"), userController.getAllUsers);
+router.put("/admin/users/:id/status", authentication, authorize("admin"), validateObjectId(["id"], "params"), userController.updateUserStatus);
+router.delete("/admin/users/:id", authentication, authorize("admin"), validateObjectId(["id"], "params"), userController.deleteUser);
 
 module.exports = router;

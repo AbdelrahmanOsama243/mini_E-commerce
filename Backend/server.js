@@ -1,4 +1,21 @@
 require("dotenv").config();
+
+// Validate required environment variables at boot
+const requiredEnvVars = [
+  "DB_URI",
+  "JWT_SECRET",
+  "JWT_REFRESH_SECRET",
+  "REDIS_URL",
+  "SESSION_SECRET",
+  "PAYMOB_API_KEY",
+  "PAYMOB_HMAC_SECRET",
+];
+
+const missingVars = requiredEnvVars.filter((key) => !process.env[key]);
+if (missingVars.length > 0) {
+  console.error(`FATAL: Missing required environment variables: ${missingVars.join(", ")}`);
+  process.exit(1);
+}
 const express = require("express");
 const helmet = require("helmet");
 const cors = require("cors");
@@ -33,6 +50,7 @@ app.use(compression());
 const allowedOrigins = [
   process.env.FRONTEND_URL || "http://localhost:4200",
   process.env.MOBILE_URL || "http://localhost:8081",
+  "https://retype-pesky-prowling.ngrok-free.dev",
   // add other origins here if needed
 ];
 
@@ -41,7 +59,10 @@ app.use(cors({
     // Allow requests with no origin (like native mobile apps, curl, postman)
     if (!origin) return callback(null, true);
     
-    if (allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV === 'development') {
+    const isLocalNetwork = /^https?:\/\/(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|172\.\d+\.\d+\.\d+|10\.\d+\.\d+\.\d+)(:\d+)?$/.test(origin);
+    const isNgrok = origin.includes('ngrok-free.app') || origin.includes('ngrok.io') || origin.includes('ngrok-free.dev');
+
+    if (allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV === 'development' || isLocalNetwork || isNgrok) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
@@ -76,6 +97,7 @@ const productRoutes = require("./routes/product.routes");
 const cartRoutes = require("./routes/cart.routes");
 const orderRoutes = require("./routes/order.routes");
 const paymentRoutes = require("./routes/payment.routes");
+const analyticsRoutes = require("./routes/analytics.routes");
 
 // Routes
 app.get("/", (req, res) => {
@@ -109,6 +131,7 @@ app.use("/api/products", productRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/payment", paymentRoutes);
+app.use("/api/analytics", analyticsRoutes);
 
 // Error Middleware (should be after all routes)
 app.use(notFound);

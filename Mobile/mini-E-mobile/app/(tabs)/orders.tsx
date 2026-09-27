@@ -12,12 +12,15 @@ import { useFocusEffect } from 'expo-router';
 import { useTheme } from '@/hooks/useThemeContext';
 import { KoshkText, KoshkCard, KoshkBadge, KoshkButton } from '@/components/Mobile';
 import { Borders, Spacing, Palette } from '@/constants/theme';
+import { Ionicons } from '@expo/vector-icons';
 import { OrderService, Order, OrderStatus } from '@/Services/Order.Service';
 import { PaymentService } from '@/Services/Payment.Service';
 import { AuthService } from '@/Services/Auth.Service';
 import { TokenStorage } from '@/Services/TokenStorage';
 import { Product } from '@/Services/Product.Service';
 import { useAuthStore } from '@/store/authStore';
+import { useOrderStore } from '@/store/orderStore';
+import { showSuccess, showError, showInfo } from '@/Utils/toast';
 
 // ─── Status Styling ──────────────────────────────────────────────────────────
 
@@ -33,44 +36,30 @@ function getStatusBadge(status: OrderStatus): { variant: 'optimal' | 'new' | 'li
       return { variant: 'lowStock', label: 'REFUNDED' };
     case 'partially_refunded':
       return { variant: 'limited', label: 'PARTIAL REFUND' };
+    case 'payment_failed':
+      return { variant: 'lowStock', label: 'PAYMENT FAILED' };
     case 'cancelled':
-    case 'failed':
       return { variant: 'lowStock', label: 'CANCELLED' };
+    case 'failed':
+      return { variant: 'lowStock', label: 'FAILED' };
     case 'pending':
     default:
       return { variant: 'lowStock', label: 'PENDING' };
   }
 }
 
-const STATUS_TIMELINE: OrderStatus[] = ['pending', 'processing', 'shipped', 'delivered'];
+const STATUS_TIMELINE: OrderStatus[] = ['pending', 'paid', 'processing', 'shipped', 'delivered'];
 
 // ─── Screen ──────────────────────────────────────────────────────────────────
 
 export default function OrdersScreen() {
   const { colors, isDark } = useTheme();
+  const { orders, loading, loadOrders } = useOrderStore();
   const { user } = useAuthStore();
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [refundingOrderId, setRefundingOrderId] = useState<string | null>(null);
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
-
-  const loadOrders = useCallback(async () => {
-    try {
-      const tokens = await TokenStorage.getStoredTokens();
-      if (!tokens.accessToken) {
-        setLoading(false);
-        return;
-      }
-      const isAdmin = user?.role === 'admin';
-      const data = await OrderService.getOrders(isAdmin);
-      setOrders(data || []);
-    } catch {
-      setOrders([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [user]);
+  const isAdmin = user?.role === 'admin';
 
   useFocusEffect(
     useCallback(() => {
@@ -104,10 +93,10 @@ export default function OrdersScreen() {
                 orderId: order._id,
                 amountCents: Math.round(order.totalPrice * 100),
               });
-              Alert.alert('Success', 'Refund issued successfully');
+              showSuccess('Refund Issued', 'Refund has been processed successfully.');
               await loadOrders();
             } catch (err: any) {
-              Alert.alert('Refund Failed', err?.message || 'Failed to process refund');
+              showError('Refund Failed', err);
             } finally {
               setRefundingOrderId(null);
             }
@@ -170,6 +159,38 @@ export default function OrdersScreen() {
     const isExpanded = expandedOrder === item._id;
     const date = item.createdAt ? new Date(item.createdAt).toLocaleDateString() : 'N/A';
 
+    const txnNumber = item.transactionId
+      ? `#TXN-${item.transactionId}`
+      : item.paymobOrderId
+      ? `#PM-${item.paymobOrderId}`
+      : item.fawryReferenceNumber
+      ? `#FWRY-${item.fawryReferenceNumber}`
+      : item.paymentMethod === 'cod'
+      ? `#COD-${item._id.slice(-6).toUpperCase()}`
+      : `#TXN-${item._id.slice(-8).toUpperCase()}`;
+
+    const paymentLabel =
+      item.paymentMethod === 'card'
+        ? 'Paymob Card'
+        : item.paymentMethod === 'wallet'
+        ? 'Paymob Wallet'
+        : item.paymentMethod === 'kiosk'
+        ? 'Fawry Pay'
+        : item.paymentMethod === 'valu'
+        ? 'valU BNPL'
+        : 'Cash on Delivery';
+
+    const paymentIcon =
+      item.paymentMethod === 'card'
+        ? 'card-outline'
+        : item.paymentMethod === 'wallet'
+        ? 'wallet-outline'
+        : item.paymentMethod === 'kiosk'
+        ? 'storefront-outline'
+        : item.paymentMethod === 'valu'
+        ? 'pie-chart-outline'
+        : 'cash-outline';
+
     return (
       <TouchableOpacity activeOpacity={0.9} onPress={() => toggleExpand(item._id)}>
         <KoshkCard variant="default" style={styles.orderCard}>
@@ -184,6 +205,24 @@ export default function OrdersScreen() {
               </KoshkText>
             </View>
             <KoshkBadge variant={statusBadge.variant} label={statusBadge.label} />
+          </View>
+
+          {/* Transaction Number & Payment Pill */}
+          <View style={[styles.transactionRow, { backgroundColor: isDark ? '#262626' : '#F4F4F5' }]}>
+            <View style={{ flex: 1 }}>
+              <KoshkText variant="caption" color={colors.textSecondary} style={{ fontSize: 10 }}>
+                TRANSACTION #
+              </KoshkText>
+              <KoshkText variant="bodySmall" bold color={colors.primary}>
+                {txnNumber}
+              </KoshkText>
+            </View>
+            <View style={[styles.paymentMethodPill, { backgroundColor: isDark ? '#171717' : '#FFFFFF', borderColor: colors.borderLight }]}>
+              <Ionicons name={paymentIcon as any} size={14} color={colors.primary} />
+              <KoshkText variant="caption" bold color={colors.text}>
+                {paymentLabel}
+              </KoshkText>
+            </View>
           </View>
 
           {/* Info Row */}
@@ -217,6 +256,39 @@ export default function OrdersScreen() {
           {/* Expanded: Timeline + Items */}
           {isExpanded && (
             <View style={[styles.expandedSection, { borderTopColor: colors.border }]}>
+              {/* Payment & Transaction Detail Record */}
+              <KoshkText variant="label" style={styles.expandedLabel}>
+                PAYMENT & TRANSACTION RECORD
+              </KoshkText>
+              <View style={[styles.txnDetailBox, { backgroundColor: isDark ? '#1F2937' : '#F9FAFB', borderColor: colors.borderLight }]}>
+                <View style={styles.txnDetailRow}>
+                  <KoshkText variant="caption" color={colors.textSecondary}>Payment Gateway:</KoshkText>
+                  <KoshkText variant="caption" bold>{item.paymentMethod === 'cod' ? 'Cash on Delivery' : 'Paymob Accept'}</KoshkText>
+                </View>
+                {item.transactionId ? (
+                  <View style={styles.txnDetailRow}>
+                    <KoshkText variant="caption" color={colors.textSecondary}>Paymob Transaction ID:</KoshkText>
+                    <KoshkText variant="caption" bold color={colors.primary}>{item.transactionId}</KoshkText>
+                  </View>
+                ) : null}
+                {item.paymobOrderId ? (
+                  <View style={styles.txnDetailRow}>
+                    <KoshkText variant="caption" color={colors.textSecondary}>Paymob Order Ref:</KoshkText>
+                    <KoshkText variant="caption" bold>{item.paymobOrderId}</KoshkText>
+                  </View>
+                ) : null}
+                {item.fawryReferenceNumber ? (
+                  <View style={styles.txnDetailRow}>
+                    <KoshkText variant="caption" color={colors.textSecondary}>Fawry Reference #:</KoshkText>
+                    <KoshkText variant="caption" bold color={colors.primary}>{item.fawryReferenceNumber}</KoshkText>
+                  </View>
+                ) : null}
+                <View style={styles.txnDetailRow}>
+                  <KoshkText variant="caption" color={colors.textSecondary}>Payment Method:</KoshkText>
+                  <KoshkText variant="caption" bold>{paymentLabel}</KoshkText>
+                </View>
+              </View>
+
               <KoshkText variant="label" style={styles.expandedLabel}>
                 LOGISTICS TIMELINE
               </KoshkText>
@@ -260,12 +332,14 @@ export default function OrdersScreen() {
                 </View>
               )}
 
-              {/* Admin Action: Issue Refund */}
-              {user?.role === 'admin' && item.status !== 'refunded' && (
+              {/* Action: Issue Refund (Admin only) */}
+              {isAdmin && item.status !== 'refunded' && item.status !== 'cancelled' && item.status !== 'failed' && (
                 <View style={styles.adminActionContainer}>
                   <KoshkButton
-                    title={refundingOrderId === item._id ? "PROCESSING REFUND..." : "ISSUE REFUND"}
-                    variant="danger"
+                    title={refundingOrderId === item._id ? "PROCESSING REFUND..." : "REQUEST REFUND"}
+                    variant="outline"
+                    size="sm"
+                    icon={<Ionicons name="arrow-undo-outline" size={16} color={Palette.danger} />}
                     fullWidth
                     disabled={refundingOrderId === item._id}
                     onPress={() => handleRefund(item)}
@@ -276,10 +350,11 @@ export default function OrdersScreen() {
             </View>
           )}
 
-          {/* Expand Indicator */}
-          <View style={styles.expandIndicator}>
-            <KoshkText variant="caption" color={colors.textMuted}>
-              {isExpanded ? '▲ COLLAPSE' : '▼ DETAILS'}
+          {/* Expand Indicator styled as sleek action button */}
+          <View style={[styles.expandIndicator, { backgroundColor: isDark ? '#262626' : '#F9FAFB', borderColor: colors.borderLight }]}>
+            <Ionicons name={isExpanded ? "chevron-up" : "chevron-down"} size={14} color={colors.primary} />
+            <KoshkText variant="caption" bold color={colors.primary} style={{ marginLeft: 4 }}>
+              {isExpanded ? 'COLLAPSE DETAILS' : 'VIEW TRANSACTION DETAILS'}
             </KoshkText>
           </View>
         </KoshkCard>
@@ -430,12 +505,49 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#e0e0e0',
   },
-  refundButton: {
+  transactionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.xs + 2,
+    borderRadius: Borders.radius.xs,
     marginTop: Spacing.xs,
   },
-  expandIndicator: {
+  paymentMethodPill: {
+    flexDirection: 'row',
     alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 3,
+    borderRadius: Borders.radius.xs,
+    borderWidth: 1,
+  },
+  txnDetailBox: {
+    padding: Spacing.sm,
+    borderRadius: Borders.radius.xs,
+    borderWidth: 1,
+    marginBottom: Spacing.sm,
+    gap: 4,
+  },
+  txnDetailRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  refundButton: {
+    marginTop: Spacing.xs,
+    borderRadius: Borders.radius.xs,
+    borderColor: '#EF4444',
+  },
+  expandIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
     marginTop: Spacing.sm,
+    paddingVertical: Spacing.xs,
+    borderRadius: Borders.radius.xs,
+    borderWidth: 1,
   },
   emptyState: {
     paddingTop: Spacing['5xl'],

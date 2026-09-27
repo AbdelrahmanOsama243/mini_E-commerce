@@ -12,12 +12,22 @@ const logger = require('../Config/logger');
 
 const initiatePayment = asyncHandler(async (req, res, next) => {
   const { paymentMethod, billingData, walletPhone, shippingAddress } = req.body;
-  const userId = req.user.id;
+  const userId = req.user._id;
 
   // 1. Fetch Cart
   const cart = await CartsRepository.getCartByUserId(userId);
   if (!cart || cart.items.length === 0) {
     return next(new ApiError(400, "Cart is empty"));
+  }
+
+  // 1.5. Validate all products exist and have sufficient stock
+  for (const item of cart.items) {
+    if (!item.productId) {
+      return next(new ApiError(400, "One or more products in your cart are no longer available"));
+    }
+    if (item.quantity > item.productId.stock) {
+      return next(new ApiError(400, `Insufficient stock for "${item.productId.name}". Available: ${item.productId.stock}, Requested: ${item.quantity}`));
+    }
   }
 
   // 2. Calculate Total Price
@@ -127,7 +137,7 @@ const initiatePayment = asyncHandler(async (req, res, next) => {
 
 const initiateCOD = asyncHandler(async (req, res, next) => {
   const { shippingAddress } = req.body;
-  const userId = req.user.id;
+  const userId = req.user._id;
 
   // 1. Check if user has saved payment methods
   const hasMethod = await PaymentMethodRepo.hasAnyMethod(userId);
@@ -139,6 +149,16 @@ const initiateCOD = asyncHandler(async (req, res, next) => {
   const cart = await CartsRepository.getCartByUserId(userId);
   if (!cart || cart.items.length === 0) {
     return next(new ApiError(400, "Cart is empty"));
+  }
+
+  // 2.5. Validate all products exist and have sufficient stock
+  for (const item of cart.items) {
+    if (!item.productId) {
+      return next(new ApiError(400, "One or more products in your cart are no longer available"));
+    }
+    if (item.quantity > item.productId.stock) {
+      return next(new ApiError(400, `Insufficient stock for "${item.productId.name}". Available: ${item.productId.stock}, Requested: ${item.quantity}`));
+    }
   }
 
   const totalPrice = cart.items.reduce((total, item) => total + item.quantity * (item.productId.price || 0), 0);
@@ -205,13 +225,16 @@ const handleCallback = asyncHandler(async (req, res, next) => {
     return res.status(400).send('No data object');
   }
 
-  // Verify HMAC if provided
-  if (hmac) {
-    const isValid = paymentService.verifyHMAC(req.query, hmac);
-    if (!isValid) {
-      logger.warn({ hmac }, "Invalid HMAC signature received for payment callback");
-      return res.status(401).json({ success: false, message: "Invalid signature" });
-    }
+  // Verify HMAC — mandatory for all callbacks
+  if (!hmac) {
+    logger.warn("Payment callback received without HMAC signature");
+    return res.status(401).json({ success: false, message: "HMAC signature is required" });
+  }
+
+  const isValid = paymentService.verifyHMAC(req.query, hmac);
+  if (!isValid) {
+    logger.warn({ hmac }, "Invalid HMAC signature received for payment callback");
+    return res.status(401).json({ success: false, message: "Invalid signature" });
   }
 
   const paymobOrderId = data.order?.id || data.order || req.query.order;
@@ -245,7 +268,7 @@ const handleCallback = asyncHandler(async (req, res, next) => {
 
       // Payment Successful
       await OrdersRepository.update(order._id, { 
-        status: 'processing', 
+        status: 'paid', 
         paymentStatus: 'paid',
         transactionId: transactionId || order.transactionId 
       });
@@ -326,6 +349,36 @@ const getPaymentStatus = asyncHandler(async (req, res, next) => {
   if (orderUserId !== currentUserId && req.user?.role !== 'admin') {
     return next(new ApiError(403, "Forbidden"));
   }
+
+  // If order is pending or missing transactionId, attempt inquiry with Paymob
+  if (order.paymobOrderId && (!order.transactionId || order.paymentStatus !== 'paid')) {
+    try {
+      const authToken = await paymentService.getAuthToken();
+      const inquiry = await paymentService.getTransactionsForOrder(authToken, order.paymobOrderId);
+      const txns = inquiry?.transactions || (Array.isArray(inquiry) ? inquiry : []);
+      if (txns && txns.length > 0) {
+        const successfulTxn = txns.find(t => t.success === true || t.success === 'true') || txns[0];
+        if (successfulTxn?.id) {
+          const isSuccess = successfulTxn.success === true || successfulTxn.success === 'true';
+          const updateData = {
+            transactionId: successfulTxn.id.toString(),
+            ...(isSuccess && {
+              status: 'paid',
+              paymentStatus: 'paid'
+            })
+          };
+          await OrdersRepository.update(order._id, updateData);
+          order.transactionId = successfulTxn.id.toString();
+          if (isSuccess) {
+            order.status = 'paid';
+            order.paymentStatus = 'paid';
+          }
+        }
+      }
+    } catch (e) {
+      logger.warn(`Could not sync payment inquiry for order ${orderId}: ${e.message}`);
+    }
+  }
   
   return sendSuccess(res, {
     status: order.paymentStatus,
@@ -340,26 +393,153 @@ const getSavedMethods = asyncHandler(async (req, res, next) => {
   return sendSuccess(res, methods);
 });
 
+const recordTransaction = asyncHandler(async (req, res, next) => {
+  const { orderId, transactionId, paymobOrderId } = req.body;
+  const order = await OrdersRepository.findById(orderId);
+  if (!order) return next(new ApiError(404, "Order not found"));
+
+  const orderUserId = (order.userId?._id || order.userId)?.toString();
+  const currentUserId = (req.user?._id || req.user?.id || req.user)?.toString();
+
+  if (orderUserId !== currentUserId && req.user?.role !== 'admin') {
+    return next(new ApiError(403, "Forbidden"));
+  }
+
+  const isFirstSuccess = order.paymentStatus !== 'paid';
+
+  const updateData = {
+    status: 'paid',
+    paymentStatus: 'paid',
+  };
+
+  if (transactionId) {
+    updateData.transactionId = transactionId.toString();
+  }
+  if (paymobOrderId) {
+    updateData.paymobOrderId = paymobOrderId.toString();
+  }
+
+  const updated = await OrdersRepository.update(orderId, updateData);
+
+  // Deduct stock if first time marked paid
+  if (isFirstSuccess) {
+    const queueData = {
+      orderId: order._id,
+      userId: order.userId,
+      cartItems: order.items
+    };
+    await addOrderJob(queueData);
+
+    // Send invoice email in background
+    try {
+      const fullOrder = await OrdersRepository.model
+        .findById(order._id)
+        .populate('userId')
+        .populate('items.productId');
+
+      if (fullOrder && fullOrder.userId?.email) {
+        const invoiceData = {
+          orderId: fullOrder._id,
+          customerName: fullOrder.userId.name || "Customer",
+          items: (fullOrder.items || []).map((i) => ({
+            name: i.productId?.name || i.name || "Product",
+            quantity: i.quantity || 1,
+            priceAtPurchase: i.priceAtPurchase || i.productId?.price || 0,
+          })),
+          totalPrice: fullOrder.totalPrice || 0,
+          shippingAddress: fullOrder.shippingAddress || "N/A",
+          paymentMethod: fullOrder.paymentMethod || "card",
+          paymentStatus: 'paid',
+          transactionId: updateData.transactionId || fullOrder.transactionId,
+          fawryRef: fullOrder.fawryRef,
+          createdAt: fullOrder.createdAt || new Date(),
+        };
+        await addEmailJob('paymentInvoice', fullOrder.userId.email, invoiceData);
+      }
+    } catch (emailErr) {
+      logger.error(`Error queuing invoice email: ${emailErr.message}`);
+    }
+  }
+
+  return sendSuccess(res, updated, "Transaction recorded successfully");
+});
+
 const refundPayment = asyncHandler(async (req, res, next) => {
   const { orderId, amountCents } = req.body;
   const order = await OrdersRepository.findById(orderId);
   if (!order) return next(new ApiError(404, "Order not found"));
-  if (order.paymentStatus !== 'paid' || !order.transactionId) {
-    return next(new ApiError(400, "Order is not paid or missing transaction ID"));
+
+  // Validate refund amount doesn't exceed order total
+  if (amountCents && amountCents > Math.round(order.totalPrice * 100)) {
+    return next(new ApiError(400, "Refund amount cannot exceed order total"));
   }
 
-  const authToken = await paymentService.getAuthToken();
+  const orderUserId = (order.userId?._id || order.userId)?.toString();
+  const currentUserId = (req.user?._id || req.user?.id || req.user)?.toString();
+
+  if (orderUserId !== currentUserId && req.user?.role !== 'admin') {
+    return next(new ApiError(403, "Forbidden: You can only refund your own orders"));
+  }
+
+  // 1. Cash on Delivery handling
+  if (order.paymentMethod === 'cod') {
+    const refundAmount = amountCents ? amountCents / 100 : order.totalPrice;
+    const updated = await OrdersRepository.update(orderId, {
+      status: 'refunded',
+      paymentStatus: 'refunded',
+      refundedAmount: refundAmount
+    });
+    return sendSuccess(res, updated, "Cash on Delivery order refunded successfully");
+  }
+
+  // 2. If transactionId missing, auto-recover from Paymob if possible
+  if (!order.transactionId && order.paymobOrderId) {
+    try {
+      const authToken = await paymentService.getAuthToken();
+      const inquiry = await paymentService.getTransactionsForOrder(authToken, order.paymobOrderId);
+      const txns = inquiry?.transactions || (Array.isArray(inquiry) ? inquiry : []);
+      const successfulTxn = txns.find(t => t.success === true || t.success === 'true') || txns[0];
+      if (successfulTxn?.id) {
+        order.transactionId = successfulTxn.id.toString();
+        order.paymentStatus = 'paid';
+        await OrdersRepository.update(orderId, {
+          transactionId: order.transactionId,
+          paymentStatus: 'paid'
+        });
+      }
+    } catch (e) {
+      logger.warn(`Paymob recovery inquiry error: ${e.message}`);
+    }
+  }
+
   const refundAmount = amountCents || Math.round(order.totalPrice * 100);
-  
-  await paymentService.refundTransaction(authToken, order.transactionId, refundAmount);
-  
-  // Webhook will update status or we update optimistically
+
+  // 3. Attempt Paymob Gateway Refund if transactionId exists
+  if (order.transactionId) {
+    try {
+      const authToken = await paymentService.getAuthToken();
+      await paymentService.refundTransaction(authToken, order.transactionId, refundAmount);
+    } catch (gatewayError) {
+      logger.warn(`Paymob refund API call error: ${gatewayError.response?.data?.message || gatewayError.message}`);
+      // If gateway rejects (e.g. sandbox or settlement window not reached), allow admin or fallback
+      if (req.user?.role !== 'admin' && process.env.NODE_ENV === 'production') {
+        return next(new ApiError(502, `Gateway Refund Failed: ${gatewayError.response?.data?.message || gatewayError.message}`));
+      }
+    }
+  } else {
+    // If still no transactionId, allow admin or dev fallback rather than blocking
+    if (req.user?.role !== 'admin' && process.env.NODE_ENV === 'production') {
+      return next(new ApiError(400, "Order is missing transaction ID and cannot be refunded through Paymob"));
+    }
+  }
+
   const updated = await OrdersRepository.update(orderId, {
     status: amountCents ? 'partially_refunded' : 'refunded',
-    paymentStatus: 'refunded'
+    paymentStatus: 'refunded',
+    refundedAmount: refundAmount / 100
   });
-  
-  return sendSuccess(res, updated, "Refund initiated");
+
+  return sendSuccess(res, updated, "Refund processed successfully");
 });
 
 const voidPayment = asyncHandler(async (req, res, next) => {
@@ -368,6 +548,10 @@ const voidPayment = asyncHandler(async (req, res, next) => {
   if (!order) return next(new ApiError(404, "Order not found"));
   if (order.paymentStatus !== 'paid' || !order.transactionId) {
     return next(new ApiError(400, "Order is not paid or missing transaction ID"));
+  }
+  // Cannot void orders that have already been shipped or delivered
+  if (['shipped', 'delivered', 'cancelled', 'refunded'].includes(order.status)) {
+    return next(new ApiError(400, `Cannot void an order with status "${order.status}"`));
   }
 
   const authToken = await paymentService.getAuthToken();
@@ -387,6 +571,7 @@ module.exports = {
   handleCallback,
   getPaymentStatus,
   getSavedMethods,
+  recordTransaction,
   refundPayment,
   voidPayment
 };

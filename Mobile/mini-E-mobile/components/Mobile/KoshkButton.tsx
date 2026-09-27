@@ -12,7 +12,7 @@ import { KoshkText } from './KoshkText';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-type ButtonVariant = 'primary' | 'secondary' | 'accent' | 'outline' | 'ghost' | 'danger';
+type ButtonVariant = 'primary' | 'secondary' | 'accent' | 'outline' | 'ghost' | 'danger' | 'success';
 type ButtonSize = 'sm' | 'md' | 'lg';
 
 interface KoshkButtonProps extends TouchableOpacityProps {
@@ -46,6 +46,7 @@ export function KoshkButton({
     outline: { bg: 'transparent', text: colors.text, border: colors.border },
     ghost: { bg: 'transparent', text: colors.text, border: 'transparent' },
     danger: { bg: colors.danger, text: '#FFFFFF', border: colors.border },
+    success: { bg: '#10B981', text: '#FFFFFF', border: '#059669' },
   };
 
   const sizeStyles: Record<ButtonSize, ViewStyle> = {

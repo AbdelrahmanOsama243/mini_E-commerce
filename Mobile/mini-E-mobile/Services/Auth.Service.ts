@@ -80,21 +80,22 @@ export const AuthService = {
    * token refresh. Returns null and clears storage if recovery fails.
    */
   async initSession(): Promise<{ user: User; accessToken: string } | null> {
+    const self = AuthService;
     try {
       const { accessToken, refreshToken } = await TokenStorage.getStoredTokens();
 
       if (!accessToken) return null;
 
       try {
-        const user = await this.getMe(accessToken);
+        const user = await self.getMe(accessToken);
         return { user, accessToken };
       } catch {
         // Access token likely expired — attempt refresh
         if (refreshToken) {
           try {
-            const refreshed = await this.refreshTokens(refreshToken);
+            const refreshed = await self.refreshTokens(refreshToken);
             if (refreshed?.accessToken) {
-              const user = await this.getMe(refreshed.accessToken);
+              const user = await self.getMe(refreshed.accessToken);
               return { user, accessToken: refreshed.accessToken };
             }
           } catch (refreshError) {
@@ -183,8 +184,13 @@ export const AuthService = {
 
       return data;
     } catch (error) {
-      await TokenStorage.clearSession();
-      throw handleCentralError(error);
+      // Only clear session if the server explicitly rejected the token (401)
+      // Don't clear on network errors — user might just have bad connectivity
+      const appError = handleCentralError(error);
+      if (appError.statusCode === 401) {
+        await TokenStorage.clearSession();
+      }
+      throw appError;
     }
   },
 

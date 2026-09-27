@@ -1,15 +1,21 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { View, StyleSheet, ScrollView } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useTheme } from "../../hooks/useThemeContext";
 import { KoshkText, KoshkButton } from "../../components/Mobile";
 import { Spacing, Borders } from "../../constants/theme";
 import { Ionicons } from "@expo/vector-icons";
+import { useOrderStore } from "../../store/orderStore";
 
 export default function FawryReferenceScreen() {
   const { ref, orderId } = useLocalSearchParams<{ ref: string, orderId: string }>();
   const router = useRouter();
   const { colors } = useTheme();
+  const { loadOrders } = useOrderStore();
+
+  useEffect(() => {
+    loadOrders();
+  }, [loadOrders]);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -36,7 +42,7 @@ export default function FawryReferenceScreen() {
 
         <KoshkButton 
           title="View Orders" 
-          variant="primary" 
+          variant="success" 
           onPress={() => router.replace("/(tabs)/orders")} 
           fullWidth 
         />

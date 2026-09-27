@@ -17,6 +17,7 @@ import {
 } from "@/components/Mobile";
 import { Spacing } from "@/constants/theme";
 import { AuthService } from "@/Services/Auth.Service";
+import { showSuccess, showError, showInfo } from "@/Utils/toast";
 
 export default function ResetPasswordScreen() {
   const { colors } = useTheme();
@@ -43,20 +44,24 @@ export default function ResetPasswordScreen() {
 
   const handleReset = async () => {
     if (!token) {
-      Alert.alert("Error", "Reset token is missing from link");
+      showError("Missing Token", "Reset token is missing from link");
       return;
     }
 
-    if (!validate()) return;
+    if (!validate()) {
+      showInfo("Validation Error", "Please ensure your passwords match and meet requirements.");
+      return;
+    }
 
     setLoading(true);
     try {
       await AuthService.resetPassword(token, password);
-      Alert.alert("Success", "Password has been reset successfully. Please log in.", [
-        { text: "OK", onPress: () => router.replace("/(auth)/login") },
-      ]);
+      showSuccess("Success", "Password has been reset successfully. Please log in.");
+      setTimeout(() => {
+        router.replace("/(auth)/login");
+      }, 1500);
     } catch (err: any) {
-      Alert.alert("Reset Failed", err.message || "Invalid or expired token");
+      showError("Reset Failed", err);
     } finally {
       setLoading(false);
     }

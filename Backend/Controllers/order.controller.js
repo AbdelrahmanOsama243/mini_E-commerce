@@ -9,7 +9,7 @@ const { addOrderJob } = require("../Jobs/order.queue");
 
 const createOrder = asyncHandler(async (req, res, next) => {
   const { shippingAddress, paymentMethod = 'cod' } = req.body;
-  const userId = req.user?.id;
+  const userId = req.user?._id;
   if (!userId) {
     return next(new ApiError(401, "Unauthorized"));
   }
@@ -22,8 +22,16 @@ const createOrder = asyncHandler(async (req, res, next) => {
 
   const cartItems = cart.items;
 
-  // Remove synchronous stock validation and deduction
-  // This will be handled asynchronously by the worker
+  // Pre-validate stock availability before creating order
+  for (const item of cartItems) {
+    const product = item.productId;
+    if (!product) {
+      return next(new ApiError(400, "One or more products in your cart are no longer available"));
+    }
+    if (item.quantity > product.stock) {
+      return next(new ApiError(400, `Insufficient stock for "${product.name}". Available: ${product.stock}, Requested: ${item.quantity}`));
+    }
+  }
 
 
   // Create order items array
@@ -63,18 +71,20 @@ const createOrder = asyncHandler(async (req, res, next) => {
 });
 
 const getOrders = asyncHandler(async (req, res, next) => {
-  const userId = req.user?.id;
+  const userId = req.user?._id;
+  const page = Math.max(parseInt(req.query.page) || 1, 1);
+  const limit = Math.min(Math.max(parseInt(req.query.limit) || 10, 1), 100);
   let result;
 
   if (req.query.all === "true" && req.user?.role === "admin") {
     // Admin gets all orders
-    result = await OrdersRepository.findAll({}, { populate: "userId items.productId", limit: 1000 });
+    result = await OrdersRepository.findAll({}, { populate: "userId items.productId", page, limit });
   } else {
     // User gets their own orders
-    result = await OrdersRepository.findAll({ userId }, { populate: "items.productId", limit: 1000 });
+    result = await OrdersRepository.findAll({ userId }, { populate: "items.productId", page, limit });
   }
 
-  return sendSuccess(res, result.items);
+  return sendSuccess(res, { items: result.items, total: result.total, page: result.page, limit: result.limit });
 });
 
 const getOrderById = [
@@ -114,4 +124,43 @@ const updateOrderStatus = [
   })
 ];
 
-module.exports = { createOrder, getOrders, getOrderById, updateOrderStatus };
+const cancelOrder = asyncHandler(async (req, res, next) => {
+  const { id } = req.params;
+  const order = await OrdersRepository.findById(id);
+
+  if (!order) {
+    return next(new ApiError(404, "Order not found"));
+  }
+
+  const orderUserId = (order.userId?._id || order.userId)?.toString();
+  const currentUserId = (req.user?._id || req.user?.id || req.user)?.toString();
+
+  if (orderUserId !== currentUserId && req.user?.role !== "admin") {
+    return next(new ApiError(403, "Forbidden"));
+  }
+
+  // Can only cancel if order is pending, paid, or payment_failed
+  if (!["pending", "paid", "payment_failed"].includes(order.status)) {
+    return next(new ApiError(400, `Cannot cancel an order with status "${order.status}"`));
+  }
+
+  // If order was already paid, restore stock
+  if (order.paymentStatus === "paid") {
+    for (const item of order.items) {
+      await ProductsRepository.model.findOneAndUpdate(
+        { _id: item.productId },
+        { $inc: { stock: item.quantity } },
+        { new: true }
+      );
+    }
+  }
+
+  const updated = await OrdersRepository.update(id, {
+    status: "cancelled",
+    paymentStatus: order.paymentStatus === "paid" ? "refunded" : order.paymentStatus,
+  });
+
+  return sendSuccess(res, updated, "Order cancelled successfully");
+});
+
+module.exports = { createOrder, getOrders, getOrderById, updateOrderStatus, cancelOrder };

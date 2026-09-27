@@ -12,14 +12,15 @@ if (debuggerHost) {
 }
 
 // Priority 1: Use explicitly defined API URL from .env (e.g. EXPO_PUBLIC_API_URL)
+// This is used for EAS Build production/preview builds
 if (process.env.EXPO_PUBLIC_API_URL) {
   baseURL = process.env.EXPO_PUBLIC_API_URL;
-} 
-// Priority 2: Use Expo's LAN IP if available (Expo Go / Dev Client)
+}
+// Priority 2: Use Expo's LAN IP if available (Expo Go on same Wi-Fi)
 else if (computerIp) {
   baseURL = `http://${computerIp}:3000/api`;
-} 
-// Priority 3: Fallbacks for emulators/web
+}
+// Priority 3: Fallbacks for emulators/web (development only)
 else {
   baseURL = Platform.select({
     android: 'http://10.0.2.2:3000/api', // Standard Android Emulator loopback
@@ -28,6 +29,8 @@ else {
   }) as string;
 }
 
-// NGROK_OVERRIDE
-baseURL = 'https://retype-pesky-prowling.ngrok-free.dev/api';
+if (__DEV__) {
+  console.log('[Mobile API] Base URL:', baseURL);
+}
+
 export const BASE_URL = baseURL;

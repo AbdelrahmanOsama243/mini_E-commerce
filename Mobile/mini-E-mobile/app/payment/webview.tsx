@@ -4,6 +4,9 @@ import { WebView } from "react-native-webview";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useTheme } from "../../hooks/useThemeContext";
 import { usePaymentStore } from "../../store/paymentStore";
+import { useOrderStore } from "../../store/orderStore";
+
+import { PaymentService } from "../../Services/Payment.Service";
 
 export default function PaymentWebViewScreen() {
   const { url, orderId } = useLocalSearchParams<{ url: string; orderId: string }>();
@@ -12,9 +15,38 @@ export default function PaymentWebViewScreen() {
   const { checkPaymentStatus } = usePaymentStore();
   const navigatedRef = useRef(false);
 
-  const navigateToResult = (result: 'success' | 'failed') => {
+  const extractParams = (targetUrl: string) => {
+    try {
+      const qs = targetUrl.split('?')[1];
+      if (!qs) return {};
+      const params: Record<string, string> = {};
+      qs.split('&').forEach((part) => {
+        const [k, v] = part.split('=');
+        if (k) params[decodeURIComponent(k)] = decodeURIComponent(v || '');
+      });
+      return params;
+    } catch {
+      return {};
+    }
+  };
+
+  const navigateToResult = async (result: 'success' | 'failed', txnParams?: { transactionId?: string; paymobOrderId?: string }) => {
     if (navigatedRef.current) return;
     navigatedRef.current = true;
+    if (result === 'success') {
+      if (orderId) {
+        try {
+          await PaymentService.recordTransaction({
+            orderId,
+            transactionId: txnParams?.transactionId,
+            paymobOrderId: txnParams?.paymobOrderId,
+          });
+        } catch (e) {
+          console.warn("Could not record transaction directly:", e);
+        }
+      }
+      useOrderStore.getState().loadOrders();
+    }
     router.replace(result === 'success' ? "../payment/success" : "../payment/failed");
   };
 
@@ -50,7 +82,11 @@ export default function PaymentWebViewScreen() {
         onNavigationStateChange={(navState) => {
           const currentUrl = navState.url || '';
           if (currentUrl.includes('/payment/success') || currentUrl.includes('success=true')) {
-            navigateToResult('success');
+            const params = extractParams(currentUrl);
+            navigateToResult('success', {
+              transactionId: params.id,
+              paymobOrderId: params.order,
+            });
           } else if (currentUrl.includes('/payment/failed') || currentUrl.includes('success=false')) {
             navigateToResult('failed');
           }

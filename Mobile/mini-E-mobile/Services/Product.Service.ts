@@ -3,6 +3,7 @@ import axiosInstance from '../core/interceptors/HttpTokenInterceptor/HttpTokenIn
 
 export interface Product {
   _id: string;
+  createdBy?: string;
   name: string;
   description?: string;
   price: number;

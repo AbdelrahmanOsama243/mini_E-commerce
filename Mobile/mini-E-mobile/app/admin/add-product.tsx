@@ -16,6 +16,7 @@ import { KoshkText, KoshkButton, KoshkInput } from '@/components/Mobile';
 import { Borders, Spacing, Palette } from '@/constants/theme';
 import { moderateScale, verticalScale } from '@/Utils/responsive';
 import { ProductService } from '@/Services/Product.Service';
+import { showSuccess, showError, showInfo } from '@/Utils/toast';
 
 export default function AddProductScreen() {
   const { colors, isDark } = useTheme();
@@ -39,7 +40,7 @@ export default function AddProductScreen() {
 
   const handleCreate = async () => {
     if (!name || !category || !price || !stock || !imageUri) {
-      Alert.alert('Validation', 'Please fill all fields and take a picture.');
+      showInfo('Validation Incomplete', 'Please fill all fields and provide a product picture.');
       return;
     }
     
@@ -53,11 +54,12 @@ export default function AddProductScreen() {
         description,
       }, imageUri);
       
-      Alert.alert('Success', 'Product created successfully!', [
-        { text: 'OK', onPress: () => router.back() }
-      ]);
+      showSuccess('Product Created', `"${name}" was created successfully!`);
+      setTimeout(() => {
+        router.back();
+      }, 1200);
     } catch (err: any) {
-      Alert.alert('Error', err.message || 'Failed to create product');
+      showError('Creation Failed', err);
     } finally {
       setLoading(false);
     }
@@ -67,7 +69,7 @@ export default function AddProductScreen() {
     if (!permission?.granted) {
       const { granted } = await requestPermission();
       if (!granted) {
-        Alert.alert('Permission needed', 'Camera permission is required to take a picture.');
+        showInfo('Permission Needed', 'Camera permission is required to take a picture.');
         return;
       }
     }
@@ -83,7 +85,7 @@ export default function AddProductScreen() {
           setShowCamera(false);
         }
       } catch (e) {
-        Alert.alert('Error', 'Failed to take picture');
+        showError('Camera Error', 'Failed to take picture');
       }
     }
   };

@@ -1,0 +1,174 @@
+<div class="user-dashboard-container">
+  <!-- Header Banner -->
+  <header class="dashboard-header">
+    <div class="header-left">
+      <span class="overline">CUSTOMER ANALYTICS PORTAL</span>
+      <h1 class="title">My Orders & Spending Dashboard</h1>
+      <p class="subtitle">Overview of your purchasing patterns, orders breakdown, and spending history.</p>
+    </div>
+    <div class="header-right">
+      <button (click)="loadUserAnalytics()" class="btn-refresh" [disabled]="loading()">
+        <span *ngIf="!loading()">⟳ Refresh</span>
+        <span *ngIf="loading()">Updating...</span>
+      </button>
+      <a routerLink="/orders" class="btn-primary">View Full Order History →</a>
+    </div>
+  </header>
+
+  <!-- Loading State -->
+  <div *ngIf="loading()" class="loading-state">
+    <app-loading-spinner></app-loading-spinner>
+    <p>Loading analytics data...</p>
+  </div>
+
+  <div *ngIf="!loading()" class="dashboard-content">
+    <!-- Metric Stat Cards Grid -->
+    <div class="stats-grid">
+      <!-- Total Orders Card -->
+      <div class="stat-card">
+        <div class="stat-header">
+          <span class="stat-label">TOTAL ORDERS</span>
+          <span class="stat-icon">📦</span>
+        </div>
+        <div class="stat-value">{{ stats()?.totalOrders || 0 }}</div>
+        <div class="stat-footer">All time orders placed</div>
+      </div>
+
+      <!-- Total Spent Card -->
+      <div class="stat-card highlight">
+        <div class="stat-header">
+          <span class="stat-label">TOTAL SPENT</span>
+          <span class="stat-icon">💳</span>
+        </div>
+        <div class="stat-value">${{ (stats()?.totalSpent || 0) | number:'1.2-2' }}</div>
+        <div class="stat-footer">Completed & paid purchases</div>
+      </div>
+
+      <!-- Paid / Processing Card -->
+      <div class="stat-card success">
+        <div class="stat-header">
+          <span class="stat-label">PAID & PROCESSING</span>
+          <span class="stat-icon">✓</span>
+        </div>
+        <div class="stat-value">{{ (stats()?.paidCount || 0) + (stats()?.processingCount || 0) }}</div>
+        <div class="stat-footer">Confirmed & in progress</div>
+      </div>
+
+      <!-- Pending Orders Card -->
+      <div class="stat-card warning">
+        <div class="stat-header">
+          <span class="stat-label">PENDING ORDERS</span>
+          <span class="stat-icon">⏳</span>
+        </div>
+        <div class="stat-value">{{ stats()?.pendingCount || 0 }}</div>
+        <div class="stat-footer">Awaiting payment or processing</div>
+      </div>
+    </div>
+
+    <!-- Charts Row Grid -->
+    <div class="charts-grid">
+      <!-- Status Breakdown Chart -->
+      <div class="chart-card">
+        <div class="chart-card-header">
+          <div class="chart-title-box">
+            <span class="overline">DISTRIBUTION</span>
+            <h3>Orders By Status</h3>
+          </div>
+          <span class="badge">{{ statusChartData().length }} Status Categories</span>
+        </div>
+
+        <div class="chart-container" *ngIf="statusChartData().length > 0; else noStatusData">
+          <ngx-charts-pie-chart
+            [results]="statusChartData()"
+            [scheme]="colorScheme"
+            [doughnut]="true"
+            [arcWidth]="0.35"
+            [legend]="true"
+            [legendTitle]="'Status Legend'"
+            [labels]="true"
+            [animations]="true">
+          </ngx-charts-pie-chart>
+        </div>
+        <ng-template #noStatusData>
+          <div class="empty-chart">
+            <p>No order status data available yet.</p>
+          </div>
+        </ng-template>
+      </div>
+
+      <!-- Spending Timeline Line Chart -->
+      <div class="chart-card">
+        <div class="chart-card-header">
+          <div class="chart-title-box">
+            <span class="overline">HISTORICAL TREND</span>
+            <h3>Spending Timeline</h3>
+          </div>
+          <span class="badge">Monthly</span>
+        </div>
+
+        <div class="chart-container" *ngIf="spendingChartData().length > 0 && spendingChartData()[0].series.length > 0; else noSpendingData">
+          <ngx-charts-line-chart
+            [results]="spendingChartData()"
+            [scheme]="spendingColorScheme"
+            [xAxis]="true"
+            [yAxis]="true"
+            [showXAxisLabel]="true"
+            [showYAxisLabel]="true"
+            [xAxisLabel]="'Month'"
+            [yAxisLabel]="'Amount ($)'"
+            [autoScale]="true"
+            [timeline]="true"
+            [animations]="true">
+          </ngx-charts-line-chart>
+        </div>
+        <ng-template #noSpendingData>
+          <div class="empty-chart">
+            <p>No historical spending recorded yet. Place an order to see your trend!</p>
+          </div>
+        </ng-template>
+      </div>
+    </div>
+
+    <!-- Status Detailed Counter Grid -->
+    <div class="breakdown-section">
+      <h3 class="section-title">Order Status Counter</h3>
+      <div class="status-chips-grid">
+        <div class="status-chip chip-paid">
+          <span class="chip-dot"></span>
+          <span class="chip-name">Paid:</span>
+          <strong>{{ stats()?.paidCount || 0 }}</strong>
+        </div>
+        <div class="status-chip chip-pending">
+          <span class="chip-dot"></span>
+          <span class="chip-name">Pending:</span>
+          <strong>{{ stats()?.pendingCount || 0 }}</strong>
+        </div>
+        <div class="status-chip chip-processing">
+          <span class="chip-dot"></span>
+          <span class="chip-name">Processing:</span>
+          <strong>{{ stats()?.processingCount || 0 }}</strong>
+        </div>
+        <div class="status-chip chip-shipped">
+          <span class="chip-dot"></span>
+          <span class="chip-name">Shipped:</span>
+          <strong>{{ stats()?.shippedCount || 0 }}</strong>
+        </div>
+        <div class="status-chip chip-delivered">
+          <span class="chip-dot"></span>
+          <span class="chip-name">Delivered:</span>
+          <strong>{{ stats()?.deliveredCount || 0 }}</strong>
+        </div>
+        <div class="status-chip chip-refunded">
+          <span class="chip-dot"></span>
+          <span class="chip-name">Refunded:</span>
+          <strong>{{ stats()?.refundedCount || 0 }}</strong>
+        </div>
+        <div class="status-chip chip-failed">
+          <span class="chip-dot"></span>
+          <span class="chip-name">Failed/Cancelled:</span>
+          <strong>{{ (stats()?.failedCount || 0) + (stats()?.cancelledCount || 0) }}</strong>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
