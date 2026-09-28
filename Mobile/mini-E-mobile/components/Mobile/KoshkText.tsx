@@ -2,6 +2,7 @@ import React from 'react';
 import { Text, TextProps, StyleSheet, TextStyle } from 'react-native';
 import { useTheme } from '../../hooks/useThemeContext';
 import { Typography } from '../../constants/theme';
+import { moderateScale } from '../../Utils/responsive';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -66,59 +67,59 @@ export function KoshkText({
 const variantStyles = StyleSheet.create({
   h1: {
     fontFamily: Typography.fontFamilyBold,
-    fontSize: Typography.sizes['4xl'],
-    lineHeight: Typography.sizes['4xl'] * Typography.lineHeights.tight,
+    fontSize: moderateScale(Typography.sizes['4xl']),
+    lineHeight: moderateScale(Typography.sizes['4xl']) * Typography.lineHeights.tight,
     letterSpacing: Typography.letterSpacing.tight,
   },
   h2: {
     fontFamily: Typography.fontFamilyBold,
-    fontSize: Typography.sizes['3xl'],
-    lineHeight: Typography.sizes['3xl'] * Typography.lineHeights.tight,
+    fontSize: moderateScale(Typography.sizes['3xl']),
+    lineHeight: moderateScale(Typography.sizes['3xl']) * Typography.lineHeights.tight,
     letterSpacing: Typography.letterSpacing.tight,
   },
   h3: {
     fontFamily: Typography.fontFamilySemiBold,
-    fontSize: Typography.sizes['2xl'],
-    lineHeight: Typography.sizes['2xl'] * Typography.lineHeights.tight,
+    fontSize: moderateScale(Typography.sizes['2xl']),
+    lineHeight: moderateScale(Typography.sizes['2xl']) * Typography.lineHeights.tight,
   },
   h4: {
     fontFamily: Typography.fontFamilySemiBold,
-    fontSize: Typography.sizes.xl,
-    lineHeight: Typography.sizes.xl * Typography.lineHeights.normal,
+    fontSize: moderateScale(Typography.sizes.xl),
+    lineHeight: moderateScale(Typography.sizes.xl) * Typography.lineHeights.normal,
   },
   body: {
     fontFamily: Typography.fontFamily,
-    fontSize: Typography.sizes.base,
-    lineHeight: Typography.sizes.base * Typography.lineHeights.relaxed,
+    fontSize: moderateScale(Typography.sizes.base),
+    lineHeight: moderateScale(Typography.sizes.base) * Typography.lineHeights.relaxed,
   },
   bodySmall: {
     fontFamily: Typography.fontFamily,
-    fontSize: Typography.sizes.sm,
-    lineHeight: Typography.sizes.sm * Typography.lineHeights.relaxed,
+    fontSize: moderateScale(Typography.sizes.sm),
+    lineHeight: moderateScale(Typography.sizes.sm) * Typography.lineHeights.relaxed,
   },
   caption: {
     fontFamily: Typography.fontFamily,
-    fontSize: Typography.sizes.xs,
-    lineHeight: Typography.sizes.xs * Typography.lineHeights.normal,
+    fontSize: moderateScale(Typography.sizes.xs),
+    lineHeight: moderateScale(Typography.sizes.xs) * Typography.lineHeights.normal,
   },
   label: {
     fontFamily: Typography.fontFamilyMedium,
-    fontSize: Typography.sizes.sm,
-    lineHeight: Typography.sizes.sm * Typography.lineHeights.normal,
+    fontSize: moderateScale(Typography.sizes.sm),
+    lineHeight: moderateScale(Typography.sizes.sm) * Typography.lineHeights.normal,
     letterSpacing: Typography.letterSpacing.wide,
     textTransform: 'uppercase',
   },
   overline: {
     fontFamily: Typography.fontFamilySemiBold,
-    fontSize: Typography.sizes.xs,
-    lineHeight: Typography.sizes.xs * Typography.lineHeights.normal,
+    fontSize: moderateScale(Typography.sizes.xs),
+    lineHeight: moderateScale(Typography.sizes.xs) * Typography.lineHeights.normal,
     letterSpacing: Typography.letterSpacing.widest,
     textTransform: 'uppercase',
   },
   button: {
     fontFamily: Typography.fontFamilySemiBold,
-    fontSize: Typography.sizes.md,
-    lineHeight: Typography.sizes.md * Typography.lineHeights.normal,
+    fontSize: moderateScale(Typography.sizes.md),
+    lineHeight: moderateScale(Typography.sizes.md) * Typography.lineHeights.normal,
     letterSpacing: Typography.letterSpacing.wide,
     textTransform: 'uppercase',
   },

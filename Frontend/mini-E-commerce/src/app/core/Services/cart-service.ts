@@ -21,7 +21,7 @@ export class CartService {
   // ── Helpers ────────────────────────────────────────────────────────────────
 
   private getAuthHeaders(): HttpHeaders {
-    const token = localStorage.getItem('access_token') || localStorage.getItem('token');
+    const token = localStorage.getItem('access_token');
     if (!token) {
       return new HttpHeaders({
         'Content-Type': 'application/json'

@@ -89,22 +89,22 @@ export default function AdminDashboard() {
       {/* Stats Cards */}
       <View style={styles.statsGrid}>
         <KoshkCard variant="elevated" style={[styles.statCard, { borderLeftColor: Palette.danger }]}>
-          <KoshkText variant="h2" color={colors.primary}>{metrics.products}</KoshkText>
+          <KoshkText variant="h3" color={colors.primary}>{metrics.products}</KoshkText>
           <KoshkText variant="caption" color={colors.textSecondary}>Total Products</KoshkText>
         </KoshkCard>
         
         <KoshkCard variant="elevated" style={[styles.statCard, { borderLeftColor: Palette.warning }]}>
-          <KoshkText variant="h2" color={colors.primary}>{metrics.orders}</KoshkText>
+          <KoshkText variant="h3" color={colors.primary}>{metrics.orders}</KoshkText>
           <KoshkText variant="caption" color={colors.textSecondary}>Total Orders</KoshkText>
         </KoshkCard>
         
         <KoshkCard variant="elevated" style={[styles.statCard, { borderLeftColor: Palette.blue }]}>
-          <KoshkText variant="h2" color={colors.primary}>{metrics.pending}</KoshkText>
+          <KoshkText variant="h3" color={colors.primary}>{metrics.pending}</KoshkText>
           <KoshkText variant="caption" color={colors.textSecondary}>Pending Orders</KoshkText>
         </KoshkCard>
         
         <KoshkCard variant="elevated" style={[styles.statCard, { borderLeftColor: Palette.success }]}>
-          <KoshkText variant="h2" color={colors.primary}>{metrics.delivered}</KoshkText>
+          <KoshkText variant="h3" color={colors.primary}>{metrics.delivered}</KoshkText>
           <KoshkText variant="caption" color={colors.textSecondary}>Delivered</KoshkText>
         </KoshkCard>
       </View>

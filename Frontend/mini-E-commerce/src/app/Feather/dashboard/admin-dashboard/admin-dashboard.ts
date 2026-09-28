@@ -13,6 +13,7 @@ import {
 } from '../../../Models/ianalytics';
 import { Product, CreateProductPayload, UpdateProductPayload } from '../../../Models/iproduct';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
+import { forkJoin } from 'rxjs';
 
 @Component({
   selector: 'app-admin-dashboard',
@@ -122,87 +123,68 @@ export class AdminDashboardComponent implements OnInit {
   loadAdminAnalytics() {
     this.loading.set(true);
 
-    // 1. Overview
-    this.analyticsService.getAdminOverview().subscribe({
-      next: (res) => {
-        if (res?.success) {
-          this.overview.set(res.data);
+    // Use forkJoin to wait for ALL analytics API calls to complete
+    // This ensures loading is set to false even if some calls fail
+    forkJoin({
+      overview: this.analyticsService.getAdminOverview(),
+      topProducts: this.analyticsService.getAdminTopProducts(10),
+      leastProducts: this.analyticsService.getAdminLeastProducts(10),
+      lowStock: this.analyticsService.getAdminLowStock(10),
+      revenue: this.analyticsService.getAdminRevenueTimeline(),
+      paymentStats: this.analyticsService.getAdminPaymentStats(),
+      topCustomers: this.analyticsService.getAdminTopCustomers(8),
+    }).subscribe({
+      next: (results) => {
+        // 1. Overview
+        if (results.overview?.success) {
+          this.overview.set(results.overview.data);
         }
-      },
-      error: (err) => console.error('Failed to load admin overview:', err)
-    });
 
-    // 2. Top Selling Products
-    this.analyticsService.getAdminTopProducts(10).subscribe({
-      next: (res) => {
-        if (res?.success && Array.isArray(res.data)) {
-          this.topProducts.set(res.data);
+        // 2. Top Selling Products
+        if (results.topProducts?.success && Array.isArray(results.topProducts.data)) {
+          this.topProducts.set(results.topProducts.data);
           this.topProductsChart.set(
-            res.data.slice(0, 6).map(p => ({
+            results.topProducts.data.slice(0, 6).map((p: any) => ({
               name: p.name.length > 18 ? p.name.substring(0, 16) + '..' : p.name,
               value: p.totalSold
             }))
           );
         }
-      },
-      error: (err) => console.error('Failed to load top products:', err)
-    });
 
-    // 3. Least Selling Products
-    this.analyticsService.getAdminLeastProducts(10).subscribe({
-      next: (res) => {
-        if (res?.success && Array.isArray(res.data)) {
-          this.leastProducts.set(res.data);
+        // 3. Least Selling Products
+        if (results.leastProducts?.success && Array.isArray(results.leastProducts.data)) {
+          this.leastProducts.set(results.leastProducts.data);
         }
-      },
-      error: (err) => console.error('Failed to load least products:', err)
-    });
 
-    // 4. Low Stock Alerts
-    this.analyticsService.getAdminLowStock(10).subscribe({
-      next: (res) => {
-        if (res?.success && Array.isArray(res.data)) {
-          this.lowStockProducts.set(res.data);
+        // 4. Low Stock Alerts
+        if (results.lowStock?.success && Array.isArray(results.lowStock.data)) {
+          this.lowStockProducts.set(results.lowStock.data);
         }
-      },
-      error: (err) => console.error('Failed to load low stock:', err)
-    });
 
-    // 5. Revenue Timeline
-    this.analyticsService.getAdminRevenueTimeline().subscribe({
-      next: (res) => {
-        if (res?.success && Array.isArray(res.data)) {
+        // 5. Revenue Timeline
+        if (results.revenue?.success && Array.isArray(results.revenue.data)) {
           this.revenueChartData.set([
             {
               name: 'My Store Revenue',
-              series: res.data
+              series: results.revenue.data
             }
           ]);
         }
-      },
-      error: (err) => console.error('Failed to load revenue timeline:', err)
-    });
 
-    // 6. Payment Stats
-    this.analyticsService.getAdminPaymentStats().subscribe({
-      next: (res) => {
-        if (res?.success && Array.isArray(res.data)) {
-          this.paymentMethodChart.set(res.data);
+        // 6. Payment Stats
+        if (results.paymentStats?.success && Array.isArray(results.paymentStats.data)) {
+          this.paymentMethodChart.set(results.paymentStats.data);
         }
-      },
-      error: (err) => console.error('Failed to load payment stats:', err)
-    });
 
-    // 7. Top Customers
-    this.analyticsService.getAdminTopCustomers(8).subscribe({
-      next: (res) => {
-        if (res?.success && Array.isArray(res.data)) {
-          this.topCustomers.set(res.data);
+        // 7. Top Customers
+        if (results.topCustomers?.success && Array.isArray(results.topCustomers.data)) {
+          this.topCustomers.set(results.topCustomers.data);
         }
+
         this.loading.set(false);
       },
       error: (err) => {
-        console.error('Failed to load top customers:', err);
+        console.error('Failed to load admin analytics:', err);
         this.loading.set(false);
       }
     });

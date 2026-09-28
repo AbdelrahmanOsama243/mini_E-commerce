@@ -107,7 +107,7 @@ export default function UserAnalyticsScreen() {
           <KoshkText variant="overline" color={colors.textSecondary}>
             TOTAL SPENT
           </KoshkText>
-          <KoshkText variant="h2" color={colors.success}>
+          <KoshkText variant="h4" color={colors.success} numberOfLines={1} adjustsFontSizeToFit>
             ${(stats?.totalSpent ?? 0).toLocaleString('en-US', {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,

@@ -15,6 +15,7 @@ import { useRouter } from 'expo-router';
 import { useTheme } from '@/hooks/useThemeContext';
 import { KoshkText, KoshkCard, KoshkBadge, KoshkButton } from '@/components/Mobile';
 import { Borders, Spacing, Palette } from '@/constants/theme';
+import { moderateScale } from '@/Utils/responsive';
 import { ProductService, Product } from '@/Services/Product.Service';
 import { OrderService, Order } from '@/Services/Order.Service';
 import {
@@ -1037,7 +1038,7 @@ const styles = StyleSheet.create({
     borderWidth: Borders.medium,
     borderRadius: Borders.radius.xs,
     padding: Spacing.sm,
-    fontSize: 14,
+    fontSize: moderateScale(13),
     marginBottom: Spacing.sm,
   },
   textArea: {

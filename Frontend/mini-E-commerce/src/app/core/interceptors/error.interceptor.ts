@@ -10,8 +10,33 @@ import { catchError, switchMap, filter, take, throwError, BehaviorSubject } from
 import { AuthService } from '../Services/auth-service';
 import { ToastService } from '../../shared/toast/toast.service';
 
-let isRefreshing = false;
-let refreshTokenSubject: BehaviorSubject<any> = new BehaviorSubject<any>(null);
+/**
+ * Token refresh state management class
+ * Encapsulates the refresh flag and subject to avoid module-level mutable state
+ */
+class RefreshState {
+  private _isRefreshing = false;
+  private _subject = new BehaviorSubject<string | null>(null);
+
+  get isRefreshing(): boolean {
+    return this._isRefreshing;
+  }
+
+  set isRefreshing(value: boolean) {
+    this._isRefreshing = value;
+  }
+
+  get subject(): BehaviorSubject<string | null> {
+    return this._subject;
+  }
+
+  reset(): void {
+    this._isRefreshing = false;
+    this._subject.next(null);
+  }
+}
+
+const refreshState = new RefreshState();
 
 export const errorInterceptor: HttpInterceptorFn = (
   req: HttpRequest<unknown>,
@@ -31,16 +56,16 @@ export const errorInterceptor: HttpInterceptorFn = (
         req.url.includes('/refresh');
 
       if ([401, 403].includes(error.status) && !isAuthEndpoint) {
-        if (!isRefreshing) {
-          isRefreshing = true;
-          refreshTokenSubject.next(null);
+        if (!refreshState.isRefreshing) {
+          refreshState.isRefreshing = true;
+          refreshState.reset();
 
           return authService.refreshToken().pipe(
-            switchMap((tokenResponse: any) => {
-              isRefreshing = false;
-              const newAccessToken = authService.getAccessToken() || tokenResponse?.data?.accessToken || tokenResponse?.accessToken;
+            switchMap(() => {
+              refreshState.isRefreshing = false;
+              const newAccessToken = authService.getAccessToken();
               if (newAccessToken) {
-                refreshTokenSubject.next(newAccessToken);
+                refreshState.subject.next(newAccessToken);
               }
 
               const clonedReq = req.clone({
@@ -51,15 +76,15 @@ export const errorInterceptor: HttpInterceptorFn = (
               return next(clonedReq);
             }),
             catchError((err) => {
-              isRefreshing = false;
-              authService.clearSession(); // Using clearSession here as logout might trigger another API call
+              refreshState.isRefreshing = false;
+              authService.clearSession();
               toastService.showError('Authentication failed or session expired. Please log in.');
               router.navigate(['/login']);
               return throwError(() => err);
             }),
           );
         } else {
-          return refreshTokenSubject.pipe(
+          return refreshState.subject.pipe(
             filter((token) => token != null),
             take(1),
             switchMap((jwt) => {

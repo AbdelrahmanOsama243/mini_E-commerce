@@ -60,7 +60,8 @@ export class CartComponent implements OnInit {
 
   updateQty(itemId: string, qty: number, stock: number) {
     if (qty <= 0) return;
-    if (qty > stock) {
+    // Validate stock — if stock is undefined/null, skip validation (backend will catch it)
+    if (stock != null && qty > stock) {
       this.toastService.showError(`Only ${stock} items left in stock.`);
       return;
     }
@@ -87,17 +88,26 @@ export class CartComponent implements OnInit {
     });
   }
 
+  showClearConfirm = signal(false);
+
   clearCart() {
-    if (confirm('Are you sure you want to clear your cart?')) {
-      this.loading.set(true);
-      this.cartService.clearCart().subscribe({
-        next: (res) => {
-          this.cart.set(res.data);
-          this.loading.set(false);
-          this.toastService.showSuccess('Cart cleared.');
-        },
-        error: () => this.loading.set(false),
-      });
-    }
+    this.showClearConfirm.set(true);
+  }
+
+  confirmClearCart() {
+    this.showClearConfirm.set(false);
+    this.loading.set(true);
+    this.cartService.clearCart().subscribe({
+      next: (res) => {
+        this.cart.set(res.data);
+        this.loading.set(false);
+        this.toastService.showSuccess('Cart cleared.');
+      },
+      error: () => this.loading.set(false),
+    });
+  }
+
+  cancelClearCart() {
+    this.showClearConfirm.set(false);
   }
 }

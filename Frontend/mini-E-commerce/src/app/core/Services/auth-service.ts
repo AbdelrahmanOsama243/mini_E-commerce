@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable, BehaviorSubject, tap, catchError, of, switchMap } from 'rxjs';
+import { Observable, BehaviorSubject, tap, catchError, of, switchMap, throwError } from 'rxjs';
 import { environment } from './environment';
 import {
   RegisterPayload,
@@ -24,8 +24,12 @@ export class AuthService {
 
   private currentUserSubject = new BehaviorSubject<User | null>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
-  
+
   private currentAccessToken: string | null = null;
+
+  // Rate limiting for auth endpoints
+  private lastRequestTime: { [key: string]: number } = {};
+  private readonly RATE_LIMIT_MS = 2000; // 2 seconds between requests
 
   constructor(private http: HttpClient) {
     this.restoreLocalSession();
@@ -49,12 +53,22 @@ export class AuthService {
   initAuth(): Observable<any> {
     const storedRefreshToken = localStorage.getItem('refresh_token');
     const storedToken = localStorage.getItem('access_token');
-    
+
     // If no stored credentials at all, return null
     if (!storedRefreshToken && !storedToken) {
       return of(null);
     }
-    
+
+    // If we have an access token but no refresh token, just validate the access token
+    if (storedToken && !storedRefreshToken) {
+      return this.getMe().pipe(
+        catchError(() => {
+          this.clearSession();
+          return of(null);
+        })
+      );
+    }
+
     return this.refreshToken();
   }
 
@@ -144,15 +158,36 @@ export class AuthService {
     });
   }
 
+  /**
+   * Check if a request is allowed based on rate limiting
+   * @param key - Unique key for the endpoint (e.g., 'login', 'register')
+   * @returns true if request is allowed, false if rate limited
+   */
+  private isRateLimited(key: string): boolean {
+    const now = Date.now();
+    const lastTime = this.lastRequestTime[key] || 0;
+    if (now - lastTime < this.RATE_LIMIT_MS) {
+      return true;
+    }
+    this.lastRequestTime[key] = now;
+    return false;
+  }
+
 
 
   /** POST /api/users/register → 201 { success, message } */
   register(payload: RegisterPayload): Observable<{ success: boolean; message: string }> {
+    if (this.isRateLimited('register')) {
+      return of({ success: false, message: 'Too many requests. Please wait before trying again.' });
+    }
     return this.http.post<{ success: boolean; message: string }>(`${this.apiUrl}/register`, payload);
   }
 
   /** POST /api/users/login → 200 { success, message, data: { user, accessToken, refreshToken } } */
   login(payload: LoginPayload): Observable<{ success: boolean; message: string; data: LoginResponse }> {
+    if (this.isRateLimited('login')) {
+      return throwError(() => ({ success: false, message: 'Too many requests. Please wait before trying again.' }));
+    }
     return this.http.post<{ success: boolean; message: string; data: LoginResponse }>(
       `${this.apiUrl}/login`,
       payload,
@@ -205,9 +240,12 @@ export class AuthService {
         }
         return of(null);
       }),
-      catchError(() => {
-        // If refresh fails and token was expired/invalid, clear session
-        this.clearSession();
+      catchError((err: any) => {
+        // Only clear session if the server explicitly rejected the token (401)
+        // Don't clear on network errors — user might just have bad connectivity
+        if (err?.status === 401) {
+          this.clearSession();
+        }
         return of(null);
       })
     );
@@ -237,16 +275,25 @@ export class AuthService {
 
   /** POST /api/users/forget-password */
   forgetPassword(email: string): Observable<{ message: string }> {
+    if (this.isRateLimited('forget-password')) {
+      return of({ message: 'Too many requests. Please wait before trying again.' });
+    }
     return this.http.post<{ message: string }>(`${this.apiUrl}/forget-password`, { email });
   }
 
   /** POST /api/users/reset-password/:token */
   resetPassword(token: string, password: string): Observable<{ message: string }> {
+    if (this.isRateLimited('reset-password')) {
+      return of({ message: 'Too many requests. Please wait before trying again.' });
+    }
     return this.http.post<{ message: string }>(`${this.apiUrl}/reset-password/${token}`, { password });
   }
 
   /** POST /api/users/resend-verification */
   resendVerification(payload: RegisterPayload): Observable<any> {
+    if (this.isRateLimited('resend-verification')) {
+      return of(null);
+    }
     return this.http.post<any>(`${this.apiUrl}/resend-verification`, payload);
   }
 }

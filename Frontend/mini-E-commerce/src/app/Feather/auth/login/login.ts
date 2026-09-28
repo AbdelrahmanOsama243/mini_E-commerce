@@ -22,6 +22,7 @@ export class LoginComponent {
   public loginForm: FormGroup;
   public loading = signal(false);
   public submitted = false;
+  public resendingVerification = signal(false);
   private returnUrl: string = '/';
 
   constructor() {
@@ -37,9 +38,8 @@ export class LoginComponent {
   }
 
   onSubmit() {
-    this.submitted = true;
-
     if (this.loginForm.invalid) {
+      this.submitted = true;
       return;
     }
 
@@ -52,6 +52,26 @@ export class LoginComponent {
       },
       error: () => {
         this.loading.set(false);
+      },
+    });
+  }
+
+  resendVerification() {
+    const email = this.f['email'].value;
+    if (!email) {
+      this.toastService.showInfo('Email Required - Please enter your email address first.');
+      return;
+    }
+    this.resendingVerification.set(true);
+    this.authService.resendVerification({ name: 'User', email, password: 'placeholder' }).subscribe({
+      next: () => {
+        this.resendingVerification.set(false);
+        this.toastService.showSuccess('Verification Sent - If this email is registered, a verification link has been sent.');
+      },
+      error: () => {
+        this.resendingVerification.set(false);
+        // Don't reveal if email exists or not
+        this.toastService.showSuccess('Verification Sent - If this email is registered, a verification link has been sent.');
       },
     });
   }

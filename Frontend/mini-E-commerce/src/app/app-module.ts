@@ -1,10 +1,12 @@
-import { NgModule, APP_INITIALIZER, provideBrowserGlobalErrorListeners } from '@angular/core';
+import { NgModule, APP_INITIALIZER, ErrorHandler } from '@angular/core';
+import { GlobalErrorHandler } from './core/error-handler';
 import { BrowserModule } from '@angular/platform-browser';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 import { httpTokenInterceptor } from './core/interceptors/http-token.interceptor';
 import { errorInterceptor } from './core/interceptors/error.interceptor';
+import { timeoutInterceptor } from './core/interceptors/timeout.interceptor';
 import { AuthService } from './core/Services/auth-service';
 
 import { AppRoutingModule } from './app-routing-module';
@@ -76,9 +78,9 @@ import { NgxChartsModule } from '@swimlane/ngx-charts';
   ],
   imports: [BrowserModule, AppRoutingModule, FormsModule, ReactiveFormsModule, NgxChartsModule],
   providers: [
-    provideBrowserGlobalErrorListeners(),
+    { provide: ErrorHandler, useClass: GlobalErrorHandler },
     provideAnimationsAsync(),
-    provideHttpClient(withInterceptors([httpTokenInterceptor, errorInterceptor])),
+    provideHttpClient(withInterceptors([httpTokenInterceptor, errorInterceptor, timeoutInterceptor])),
     {
       provide: APP_INITIALIZER,
       useFactory: initializeApp,

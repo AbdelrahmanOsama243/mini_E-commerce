@@ -16,10 +16,10 @@ import { ProductService, Product } from '@/Services/Product.Service';
 type SortField = 'name' | 'stock' | 'price' | 'category';
 type SortDirection = 'asc' | 'desc';
 
-function getStockStatus(stock: number): { variant: 'optimal' | 'lowStock' | 'outOfStock'; label: string } {
-  if (stock <= 0) return { variant: 'outOfStock', label: 'OUT OF STOCK' };
-  if (stock <= 5) return { variant: 'lowStock', label: 'LOW STOCK' };
-  return { variant: 'optimal', label: 'OPTIMAL' };
+function getStockStatus(stock: number): { variant: 'optimal' | 'lowStock' | 'outOfStock'; label: string; shortLabel: string } {
+  if (stock <= 0) return { variant: 'outOfStock', label: 'Out of Stock', shortLabel: 'OUT' };
+  if (stock <= 5) return { variant: 'lowStock', label: 'Low Stock', shortLabel: 'LOW' };
+  return { variant: 'optimal', label: 'Optimal', shortLabel: 'OK' };
 }
 
 export default function InventoryScreen() {
@@ -139,7 +139,7 @@ export default function InventoryScreen() {
           ${item.price.toFixed(0)}
         </KoshkText>
         <View style={styles.colStatus}>
-          <KoshkBadge variant={status.variant} label={status.label} />
+          <KoshkBadge variant={status.variant} label={status.shortLabel} />
         </View>
       </View>
     );
@@ -271,14 +271,14 @@ const styles = StyleSheet.create({
   tableHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: Spacing.md,
+    paddingHorizontal: Spacing.sm,
     paddingVertical: Spacing.sm,
     borderBottomWidth: Borders.medium,
   },
   tableRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: Spacing.md,
+    paddingHorizontal: Spacing.sm,
     paddingVertical: Spacing.sm,
     borderBottomWidth: 1,
   },
@@ -286,10 +286,10 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   colMain: { flex: 2 },
-  colCat: { width: 44 },
-  colStock: { width: 36, textAlign: 'center' },
-  colPrice: { width: 44, textAlign: 'right' },
-  colStatus: { flex: 1, alignItems: 'flex-end' },
+  colCat: { width: 36 },
+  colStock: { width: 32, textAlign: 'center' },
+  colPrice: { width: 40, textAlign: 'right' },
+  colStatus: { flex: 1, alignItems: 'flex-end', minWidth: 48 },
   empty: {
     paddingTop: Spacing['4xl'],
     alignItems: 'center',

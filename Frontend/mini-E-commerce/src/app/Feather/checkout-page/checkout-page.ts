@@ -7,6 +7,7 @@ import { PaymentService } from '../../core/Services/payment.service';
 import { AuthService } from '../../core/Services/auth-service';
 import { ToastService } from '../../shared/toast/toast.service';
 import { PaymentMethodType, SavedPaymentMethod } from '../../Models/ipayment';
+import { OrderService } from '../../core/Services/order-service';
 
 @Component({
   selector: 'app-checkout',
@@ -106,14 +107,13 @@ export class CheckoutComponent implements OnInit {
   }
 
   onSubmit() {
-    this.submitted = true;
-
     if (!this.authService.isVerified()) {
       this.toastService.showError('You must verify your email before placing an order.');
       return;
     }
 
     if (this.checkoutForm.invalid) {
+      this.submitted = true;
       this.toastService.showError('Please fill in all required fields correctly.');
       return;
     }
@@ -133,6 +133,7 @@ export class CheckoutComponent implements OnInit {
 
       this.paymentService.initiateCOD(payload).subscribe({
         next: (res) => {
+          this.cartService.clearCart().subscribe();
           this.loading.set(false);
           this.toastService.showSuccess('Order placed successfully via Cash on Delivery!');
           this.router.navigate(['/orders']);
@@ -149,7 +150,7 @@ export class CheckoutComponent implements OnInit {
         billingData: {
           firstName: formVal.firstName.trim(),
           lastName: formVal.lastName.trim(),
-          email: '', // Automatically supplied by backend from logged-in account
+          email: this.authService.getUser()?.email || 'customer@example.com',
           phone: formVal.phone.trim(),
           city: formVal.city || 'Cairo',
           street: formVal.street || formVal.shippingAddress.trim(),

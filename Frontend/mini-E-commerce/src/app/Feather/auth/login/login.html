@@ -52,12 +52,24 @@
       </div>
 
       <!-- Submit Button -->
-      <button 
-        type="submit" 
+      <button
+        type="submit"
         class="w-full py-4 mt-4 bg-primary text-on-primary text-xl brutalist-button brutalist-shadow brutalist-shadow-hover"
       >
         Sign In
       </button>
+
+      <!-- Resend Verification -->
+      <div class="mt-4 text-center">
+        <button
+          type="button"
+          (click)="resendVerification()"
+          [disabled]="resendingVerification()"
+          class="font-headline font-bold text-xs uppercase text-secondary hover:underline tracking-tight disabled:opacity-50"
+        >
+          {{ resendingVerification() ? 'Sending...' : 'Resend Verification Email' }}
+        </button>
+      </div>
     </form>
 
     <div class="mt-8 text-center border-t-2 border-primary pt-6">

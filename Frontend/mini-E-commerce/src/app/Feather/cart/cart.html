@@ -95,7 +95,7 @@
       </div>
 
       <!-- Clear Cart button -->
-      <button 
+      <button
         (click)="clearCart()"
         class="self-start py-2 px-4 bg-transparent border-2 border-primary text-primary font-headline uppercase font-bold text-xs hover:bg-secondary hover:text-white transition-colors brutalist-shadow-sm brutalist-shadow-hover-sm mb-8"
       >
@@ -139,5 +139,29 @@
         </a>
       </div>
     </aside>
+  }
+
+  <!-- Clear Cart Confirmation Dialog -->
+  @if (showClearConfirm()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+      <div class="bg-surface-container-high border-4 border-primary p-6 brutalist-shadow max-w-sm w-full">
+        <h3 class="font-headline font-black text-xl uppercase mb-3">Clear Cart</h3>
+        <p class="font-body text-on-surface-variant mb-6">Are you sure you want to remove all items from your cart?</p>
+        <div class="flex gap-3">
+          <button
+            (click)="cancelClearCart()"
+            class="flex-1 py-2 px-4 bg-transparent border-2 border-primary text-primary font-headline uppercase font-bold text-xs hover:bg-primary hover:text-on-primary transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            (click)="confirmClearCart()"
+            class="flex-1 py-2 px-4 bg-primary text-on-primary font-headline uppercase font-bold text-xs hover:bg-secondary transition-colors"
+          >
+            Clear
+          </button>
+        </div>
+      </div>
+    </div>
   }
 </main>

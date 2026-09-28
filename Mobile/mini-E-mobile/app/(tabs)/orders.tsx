@@ -21,6 +21,7 @@ import { Product } from '@/Services/Product.Service';
 import { useAuthStore } from '@/store/authStore';
 import { useOrderStore } from '@/store/orderStore';
 import { showSuccess, showError, showInfo } from '@/Utils/toast';
+import { moderateScale } from '@/Utils/responsive';
 
 // ─── Status Styling ──────────────────────────────────────────────────────────
 
@@ -210,7 +211,7 @@ export default function OrdersScreen() {
           {/* Transaction Number & Payment Pill */}
           <View style={[styles.transactionRow, { backgroundColor: isDark ? '#262626' : '#F4F4F5' }]}>
             <View style={{ flex: 1 }}>
-              <KoshkText variant="caption" color={colors.textSecondary} style={{ fontSize: 10 }}>
+              <KoshkText variant="caption" color={colors.textSecondary} style={{ fontSize: moderateScale(9) }}>
                 TRANSACTION #
               </KoshkText>
               <KoshkText variant="bodySmall" bold color={colors.primary}>
